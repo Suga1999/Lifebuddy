@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeBuddy – Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="/i18n.js"></script>
+    <script src="/script.js" defer></script>
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-orb dashboard-orb-one"></div>
+    <div class="dashboard-orb dashboard-orb-two"></div>
+    <div id="notificationContainer" aria-live="polite" aria-atomic="true"></div>
+
+    <header class="mobile-dashboard-header">
+        <button class="icon-button" id="sidebarToggle" type="button" aria-label="Open menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+        <a class="mobile-brand" href="/">Life<span>Buddy</span></a>
+        <div class="mobile-avatar" id="mobileAvatar">L</div>
+    </header>
+
+    <div class="dashboard-shell">
+        <button class="sidebar-overlay" id="sidebarOverlay" type="button" aria-label="Sluit menu"></button>
+        <aside class="app-sidebar" id="appSidebar">
+            <a class="sidebar-brand" href="/">Life<span>Buddy</span><small>COMMAND CENTER</small></a>
+            <section class="sidebar-profile">
+                <div class="avatar avatar-large" id="userAvatar">L</div>
+                <div class="profile-copy"><strong id="userName">Laden…</strong><span id="userEmail">jij@lifebuddy.nl</span><span class="plan-badge" id="planBadge">Free</span></div>
+            </section>
+            <section class="level-widget" aria-label="Jouw level en ervaring">
+                <div class="level-widget-top"><span id="levelDisplay">Level 1</span><span id="xpText">0 / 100 XP</span></div>
+                <div class="xp-bar-container"><div class="xp-bar-fill" id="xpBar"></div></div>
+                <span class="class-badge" id="classBadge">🧙 Wizard</span>
+            </section>
+            <nav class="sidebar-nav" aria-label="Dashboard navigatie">
+                <button class="sidebar-nav-item active" type="button" data-page="overview"><i class="fa-solid fa-house"></i><span>Overzicht</span></button>
+                <button class="sidebar-nav-item" type="button" data-page="tasks"><i class="fa-solid fa-list-check"></i><span>Taken</span><em>+10 XP</em></button>
+                <button class="sidebar-nav-item" type="button" data-page="subjects"><i class="fa-solid fa-graduation-cap"></i><span>Vakken</span><em>+5 XP</em></button>
+                <button class="sidebar-nav-item" type="button" data-page="music"><i class="fa-solid fa-headphones"></i><span>Focus music</span></button>
+                <button class="sidebar-nav-item" type="button" data-page="achievements"><i class="fa-solid fa-trophy"></i><span>Achievements</span><em id="achievementCount">0</em></button>
+                <button class="sidebar-nav-item" type="button" data-page="class"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Jouw class</span></button>
+            </nav>
+            <div class="language-switch sidebar-language-switch" aria-label="Taal kiezen"><button type="button" data-language="nl" aria-pressed="true">NL</button><button type="button" data-language="en" aria-pressed="false">EN</button></div>
+            <button class="logout-button" id="logoutBtn" type="button"><i class="fa-solid fa-arrow-right-from-bracket"></i> Uitloggen</button>
+        </aside>
+
+        <main class="dashboard-main">
+            <section class="dashboard-page active" id="page-overview">
+                <div class="dashboard-heading">
+                    <div><p class="eyebrow" id="todayLabel">JOUW DAGELIJKSE OVERZICHT</p><h1>Goed bezig, <span id="greetingName">vriend</span>.</h1><p>Een kleine stap vandaag is een groot verschil morgen.</p></div>
+                    <button class="heading-action" id="openTasks" type="button"><i class="fa-solid fa-plus"></i> Nieuwe taak</button>
+                </div>
+
+                <div class="overview-hero-grid">
+                    <article class="streak-card streak-card-premium">
+                        <div class="streak-card-copy"><span class="streak-kicker"><i class="fa-solid fa-fire"></i> STUDY STREAK</span><div class="streak-number-row"><strong id="streakCount">0</strong><span>dagen</span></div><p id="streakMessage">Begin vandaag je eigen ritme.</p></div>
+                        <div class="streak-flame" aria-hidden="true">🔥</div><div class="streak-spark streak-spark-one"></div><div class="streak-spark streak-spark-two"></div>
+                    </article>
+                    <article class="intention-card">
+                        <div class="intention-icon"><i class="fa-solid fa-heart"></i></div>
+                        <div><span class="card-kicker">DAILY INTENTION</span><blockquote>“Mijn hoofd is rustig, mijn hart staat open en ik kan alles stap voor stap.”</blockquote></div>
+                        <span class="focus-chip"><i class="fa-solid fa-bullseye"></i> Focusmodus</span>
+                    </article>
+                </div>
+
+                <section class="dash-stat-grid" aria-label="Jouw statistieken">
+                    <article class="dash-stat-card violet"><div class="stat-icon-wrap"><i class="fa-solid fa-list-check"></i></div><div><strong id="statTasks">0</strong><span>Open taken</span></div><i class="fa-solid fa-arrow-trend-up stat-trend"></i></article>
+                    <article class="dash-stat-card blue"><div class="stat-icon-wrap"><i class="fa-solid fa-book-open"></i></div><div><strong id="statSubjects">0</strong><span>Vakken</span></div><i class="fa-solid fa-arrow-trend-up stat-trend"></i></article>
+                    <article class="dash-stat-card amber"><div class="stat-icon-wrap"><i class="fa-solid fa-comment-dots"></i></div><div><strong id="statChats">0</strong><span>Coach chats</span></div><i class="fa-solid fa-arrow-trend-up stat-trend"></i></article>
+                    <article class="dash-stat-card coral"><div class="stat-icon-wrap"><i class="fa-solid fa-fire"></i></div><div><strong id="statStreak">0</strong><span>Dagelijkse streak</span></div><i class="fa-solid fa-bolt stat-trend"></i></article>
+                </section>
+
+                <div class="overview-content-grid">
+                    <section class="content-card analytics-card">
+                        <div class="card-title-row"><div><span class="card-kicker">JOUW VOORTGANG</span><h2>Analytics</h2></div><div class="analytics-tabs" role="tablist" aria-label="Analytics periode"><button class="active" type="button" data-range="week">Week</button><button type="button" data-range="month">Maand</button><button type="button" data-range="year">Jaar</button></div></div>
+                        <div class="analytics-summary"><div><strong id="analyticsPrimary">0%</strong><span id="analyticsLabel">Taakvoltooiing</span></div><p id="analyticsDescription">Voeg je eerste taak toe om je voortgang te zien.</p></div>
+                        <div class="progress-list">
+                            <div class="progress-row"><div class="progress-row-label"><span><i class="fa-solid fa-circle-check"></i> Taken voltooid</span><strong id="taskProgressText">0%</strong></div><div class="progress-track"><span class="progress-fill violet-fill" id="taskProgress"></span></div></div>
+                            <div class="progress-row"><div class="progress-row-label"><span><i class="fa-solid fa-star"></i> Cijfergemiddelde</span><strong id="gradeProgressText">—</strong></div><div class="progress-track"><span class="progress-fill blue-fill" id="gradeProgress"></span></div></div>
+                            <div class="progress-row"><div class="progress-row-label"><span><i class="fa-solid fa-wand-magic-sparkles"></i> Coach-momenten</span><strong id="chatProgressText">0</strong></div><div class="progress-track"><span class="progress-fill amber-fill" id="chatProgress"></span></div></div>
+                        </div>
+                    </section>
+                    <section class="content-card recent-card"><div class="card-title-row"><div><span class="card-kicker">VANDAAG</span><h2>Komende taken</h2></div><button class="text-action" id="viewAllTasks" type="button">Alles bekijken <i class="fa-solid fa-arrow-right"></i></button></div><ul class="modern-list" id="recentTasks"><li class="empty-state"><i class="fa-regular fa-calendar"></i><span>Je planning is helemaal vrij.</span></li></ul></section>
+                </div>
+                <section class="content-card achievement-preview-card"><div class="card-title-row"><div><span class="card-kicker">JE COLLECTIE</span><h2>Bijna ontgrendeld</h2></div><button class="text-action" id="viewAchievements" type="button">Bekijk alles <i class="fa-solid fa-arrow-right"></i></button></div><div class="achievement-preview-grid" id="overviewAchievements"></div></section>
+            </section>
+
+            <section class="dashboard-page" id="page-tasks"><div class="page-heading"><div><p class="eyebrow">PLANNING</p><h1>Jouw taken</h1><p>Maak ruimte in je hoofd door alles op één plek te plannen.</p></div><span class="page-xp"><i class="fa-solid fa-bolt"></i> +10 XP bij voltooiing</span></div><form class="add-form modern-form" id="taskForm"><input type="text" id="taskTitle" placeholder="Wat wil je vandaag afronden?" required><input type="text" id="taskDesc" placeholder="Details (optioneel)"><input type="date" id="taskDue" aria-label="Deadline"><button class="form-submit" type="submit"><i class="fa-solid fa-plus"></i><span>Toevoegen</span></button></form><ul class="modern-list full-list" id="taskList"><li class="empty-state"><i class="fa-solid fa-list-check"></i><span>Nog geen taken. Wat is je eerste kleine stap?</span></li></ul></section>
+
+            <section class="dashboard-page" id="page-subjects">
+                <div class="page-heading"><div><p class="eyebrow">STUDIE</p><h1>Jouw vakken</h1><p>Houd je cijfers en je groei inzichtelijk.</p></div><span class="page-xp"><i class="fa-solid fa-bolt"></i> +5 XP per vak</span></div>
+                <form class="add-form modern-form subject-form" id="subjectForm"><input type="text" id="subjectName" placeholder="Vaknaam" required><input type="text" id="subjectGradeLabel" placeholder="Kolom, bv. Periode 1"><input type="number" id="subjectGrade" placeholder="Cijfer (0–10)" min="0" max="10" step="0.1"><button class="form-submit" type="submit"><i class="fa-solid fa-plus"></i><span>Toevoegen</span></button></form>
+                <section class="csv-import-card" aria-labelledby="csvImportTitle">
+                    <div class="csv-import-icon"><i class="fa-solid fa-file-csv"></i></div>
+                    <div class="csv-import-copy"><span class="card-kicker">CIJFERLIJST IMPORTEREN</span><h2 id="csvImportTitle">Upload je CSV-bestand</h2><p>Gebruik kolommen zoals <strong>Vak; Periode 1; Periode 2</strong>. Elke cijferkolom blijft zichtbaar in je tabel; het gemiddelde wordt automatisch berekend.</p></div>
+                    <label class="csv-file-button" for="csvFileInput"><i class="fa-solid fa-arrow-up-from-bracket"></i><span>Bestand kiezen</span><input id="csvFileInput" type="file" accept=".csv,text/csv" hidden></label>
+                    <div class="csv-import-status" id="csvImportStatus" role="status">Nog geen bestand gekozen.</div>
+                    <div class="csv-preview" id="csvPreview" hidden></div>
+                    <div class="csv-import-actions" id="csvImportActions" hidden><button class="secondary-action" id="clearCsvImport" type="button">Annuleren</button><button class="primary-button" id="confirmCsvImport" type="button"><i class="fa-solid fa-file-import"></i> Importeer cijfers</button></div>
+                </section>
+                <section class="subject-table" aria-label="Overzicht van vakken en cijfers"><div class="subject-table-scroll"><table class="subject-grade-table"><thead id="subjectTableHeader"><tr><th>Vak</th><th>Gemiddelde</th><th aria-label="Acties"></th></tr></thead><tbody id="subjectList"><tr><td class="empty-state" colspan="3"><i class="fa-solid fa-book-open"></i><span>Nog geen vakken. Voeg je eerste vak toe.</span></td></tr></tbody></table></div></section>
+            </section>
+
+            <section class="dashboard-page" id="page-music"><div class="page-heading"><div><p class="eyebrow">FOCUS</p><h1>Jouw muziek</h1><p>Importeer je eigen MP3's en bouw een playlist voor je volgende focussessie.</p></div></div><div id="musicContent" class="premium-lock music-launch-card"><div class="premium-icon"><i class="fa-solid fa-headphones"></i></div><span class="card-kicker">JOUW LOKALE PLAYLIST</span><h2>Focus met jouw eigen muziek.</h2><p>Je MP3-bestanden blijven lokaal opgeslagen in deze browser en worden niet naar een server geüpload.</p><a class="primary-button" href="/music"><i class="fa-solid fa-music"></i> Open muziekspeler</a></div></section>
+
+            <section class="dashboard-page" id="page-achievements"><div class="page-heading"><div><p class="eyebrow">GAMIFICATION</p><h1>Achievements</h1><p>Elke stap telt. Verzamel badges voor de gewoontes die je opbouwt.</p></div><span class="page-xp"><i class="fa-solid fa-trophy"></i> <span id="achievementHeadingCount">0</span> ontgrendeld</span></div><div id="achievementList" class="achievement-grid"></div></section>
+
+            <section class="dashboard-page" id="page-class"><div class="page-heading"><div><p class="eyebrow">JOUW SPEELSTIJL</p><h1>Kies je class</h1><p>Je class geeft je een bonus die past bij jouw manier van studeren.</p></div></div><div class="class-grid"><button class="class-card warrior" type="button" data-class="warrior"><span class="class-icon">🗡️</span><strong>Warrior</strong><span>+5 XP per taak</span></button><button class="class-card wizard" type="button" data-class="wizard"><span class="class-icon">🧙</span><strong>Wizard</strong><span>+3 XP per vak</span></button><button class="class-card archer" type="button" data-class="archer"><span class="class-icon">🏹</span><strong>Archer</strong><span>+2 XP per chat</span></button><button class="class-card guardian" type="button" data-class="guardian"><span class="class-icon">🛡️</span><strong>Guardian</strong><span>+10 XP per actieve dag</span></button></div><div class="class-tip"><i class="fa-solid fa-lightbulb"></i><p>Je mag altijd wisselen. Kies een bonus die je helpt bij het doel dat nu het belangrijkst is.</p></div></section>
+        </main>
+        <aside class="friends-rail" aria-label="Vrienden">
+            <section class="friends-card">
+                <div class="friends-card-heading"><div><span class="card-kicker">JE CIRKEL</span><h2>Vrienden</h2></div><span class="friend-count" id="friendCount">0</span></div>
+                <p class="friends-intro">Nodig studievrienden uit en bekijk hun voortgang.</p>
+                <button class="friend-invite-toggle" id="toggleFriendInvite" type="button"><i class="fa-solid fa-user-plus"></i> Vriend toevoegen</button>
+                <form class="friend-invite-form" id="friendInviteForm" hidden>
+                    <label for="friendEmail">E-mailadres van je vriend</label>
+                    <div><input id="friendEmail" type="email" placeholder="vriend@email.nl" autocomplete="email" required><button type="submit" aria-label="Stuur uitnodiging"><i class="fa-solid fa-arrow-right"></i></button></div>
+                </form>
+                <p class="friend-status" id="friendStatus" role="status"></p>
+                <div class="friend-requests" id="friendRequests"></div>
+                <div class="friends-list" id="friendsList"><p class="friends-empty"><i class="fa-solid fa-users"></i><span>Nog geen vrienden toegevoegd.</span></p></div>
+            </section>
+        </aside>
+    </div>
+
+    <div class="friend-profile-modal" id="friendProfileModal" hidden>
+        <button class="friend-modal-backdrop" id="closeFriendProfile" type="button" aria-label="Sluit profiel"></button>
+        <section class="friend-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="friendProfileTitle">
+            <button class="friend-dialog-close" id="closeFriendProfileButton" type="button" aria-label="Sluit profiel"><i class="fa-solid fa-xmark"></i></button>
+            <div id="friendProfileContent"></div>
+        </section>
+    </div>
+
+    <div class="buddy-widget" id="buddyWidget">
+        <section class="buddy-panel" id="buddyPanel" hidden aria-label="LifeBuddy Coach">
+            <header class="buddy-panel-header"><div><span class="card-kicker">JOUW STUDIEMAATJE</span><h2><span id="buddyPanelName">Buddy</span> is er voor je</h2></div><div class="buddy-header-actions"><button class="buddy-header-button" id="toggleBuddyCustomizer" type="button" aria-label="Personaliseer je huisdier"><i class="fa-solid fa-wand-magic-sparkles"></i></button><button class="buddy-header-button" id="closeBuddyPanel" type="button" aria-label="Sluit chat"><i class="fa-solid fa-minus"></i></button></div></header>
+            <section class="buddy-customizer" id="buddyCustomizer" hidden aria-label="Personaliseer je LifeBuddy">
+                <label for="buddyName">Naam van je maatje</label><input id="buddyName" type="text" maxlength="18" placeholder="Buddy">
+                <span>Kleur</span><div class="buddy-choice-row" data-buddy-choice="color"><button type="button" data-buddy-color="violet" aria-label="Paarse kleur"></button><button type="button" data-buddy-color="aqua" aria-label="Blauwe kleur"></button><button type="button" data-buddy-color="rose" aria-label="Roze kleur"></button><button type="button" data-buddy-color="gold" aria-label="Gouden kleur"></button></div>
+                <span>Accessoire</span><div class="buddy-accessory-row"><button type="button" data-buddy-accessory="star">✨ Ster</button><button type="button" data-buddy-accessory="book">📚 Boeken</button><button type="button" data-buddy-accessory="leaf">🌿 Rustig</button><button type="button" data-buddy-accessory="crown">👑 Kroon</button></div>
+            </section>
+            <div class="buddy-coach-prompt"><i class="fa-solid fa-sparkles"></i><p>Vraag om hulp met plannen, leren of gewoon wat motivatie.</p></div>
+            <div class="chat-box buddy-chat-box" id="chatBox"></div>
+            <form class="chat-input buddy-chat-input" id="chatForm"><input type="text" id="chatInput" placeholder="Typ je bericht…" required autocomplete="off"><button type="submit" aria-label="Verstuur bericht"><i class="fa-solid fa-arrow-up"></i></button></form>
+        </section>
+        <div class="buddy-dock"><button class="buddy-hide-button" id="hideBuddy" type="button" aria-label="Verberg je LifeBuddy"><i class="fa-solid fa-xmark"></i></button><button class="buddy-launcher buddy-violet" id="buddyLauncher" type="button" aria-expanded="false" aria-controls="buddyPanel"><span class="buddy-speech" id="buddySpeech">Hoi, ik ben Buddy!</span><span class="buddy-accessory" id="buddyAccessory" aria-hidden="true">✨</span><span class="buddy-ear buddy-ear-left"></span><span class="buddy-ear buddy-ear-right"></span><span class="buddy-face"><i></i><i></i><b></b></span><span class="buddy-label" id="buddyLabel">Buddy</span></button></div>
+    </div>
+    <button class="buddy-restore" id="restoreBuddy" type="button" hidden aria-label="Toon je LifeBuddy"><i class="fa-solid fa-sparkles"></i></button>
+
+    <script>
+        const authToken = localStorage.getItem('token');
+        if (!authToken) window.location.replace('/');
+        let currentUser = null, tasks = [], subjects = [], chatHistory = [], dashboardStats = null, friends = [], incomingRequests = [], outgoingRequests = [];
+        const $ = (selector) => document.querySelector(selector);
+        const t = (text) => window.LifeBuddyI18n?.t(text) || text;
+        const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
+        const formatDate = (date) => new Intl.DateTimeFormat(window.LifeBuddyI18n?.getLanguage() === 'en' ? 'en-GB' : 'nl-NL', { day: 'numeric', month: 'short' }).format(new Date(date));
+
+        async function apiFetch(endpoint, options = {}) {
+            const token = localStorage.getItem('token');
+            if (!token) return null;
+            try {
+                const response = await fetch(endpoint, { ...options, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...(options.headers || {}) } });
+                if (response.status === 401) { localStorage.removeItem('token'); window.location.replace('/'); return null; }
+                if (response.status === 403) {
+                    const errorBody = await response.clone().json().catch(() => null);
+                    if (errorBody?.error === 'Invalid or expired token') { localStorage.removeItem('token'); window.location.replace('/'); return null; }
+                }
+                return response;
+            } catch (error) {
+                throw new Error('Verbinding met LifeBuddy mislukt. Controleer je internetverbinding en probeer opnieuw.');
+            }
+        }
+        function setProgress(id, value) { const element = document.getElementById(id); if (element) element.style.width = `${Math.max(0, Math.min(100, value))}%`; }
+        function streakCopy(streak) { if (streak >= 7) return t('Een indrukwekkend ritme. Blijf zo doorgaan!'); if (streak >= 3) return t('Je momentum groeit. Houd deze flow vast!'); if (streak === 1) return t('De eerste stap is gezet. Tot morgen!'); return t('Begin vandaag je eigen ritme.'); }
+        function updateStreak(streak = 0) { window.remoteStreak = streak; $('#streakCount').textContent = streak; $('#statStreak').textContent = streak; $('#streakMessage').textContent = streakCopy(streak); window.Game?.syncStreak(streak); }
+        function updateAnalytics(stats) {
+            const completed = Number(stats.completedTasks) || 0, total = Number(stats.totalTasks) || 0, taskProgress = total ? Math.round((completed / total) * 100) : 0, grade = stats.averageGrade === null || stats.averageGrade === undefined ? null : Number(stats.averageGrade), chats = Number(stats.chats) || 0;
+            $('#analyticsPrimary').textContent = `${taskProgress}%`; $('#analyticsLabel').textContent = total ? t('Taakvoltooiing') : t('Klaar om te starten'); $('#analyticsDescription').textContent = total ? `${completed} / ${total} ${t('Taken voltooid').toLowerCase()}.` : t('Voeg je eerste taak toe om je voortgang te zien.'); $('#taskProgressText').textContent = `${taskProgress}%`; $('#gradeProgressText').textContent = grade === null ? '—' : grade.toFixed(1); $('#chatProgressText').textContent = chats;
+            setProgress('taskProgress', taskProgress); setProgress('gradeProgress', grade === null ? 0 : Math.round(grade * 10)); setProgress('chatProgress', Math.min(chats * 10, 100));
+        }
+        function renderTasks() {
+            const list = $('#taskList'); if (!tasks.length) { list.innerHTML = '<li class="empty-state"><i class="fa-solid fa-list-check"></i><span>Nog geen taken. Wat is je eerste kleine stap?</span></li>'; return; }
+            list.innerHTML = tasks.map((task) => `<li class="modern-list-item ${task.status === 'completed' ? 'is-complete' : ''}"><button class="complete-button" type="button" data-complete-task="${escapeHtml(task.id)}" aria-label="Markeer ${escapeHtml(task.title)} als voltooid"><i class="fa-solid fa-check"></i></button><div class="list-item-content"><strong>${escapeHtml(task.title)}</strong>${task.description ? `<span>${escapeHtml(task.description)}</span>` : ''}${task.due_date ? `<small><i class="fa-regular fa-calendar"></i> ${formatDate(task.due_date)}</small>` : ''}</div><span class="status-pill ${task.status === 'completed' ? 'complete' : ''}">${task.status === 'completed' ? 'Klaar' : 'Open'}</span><button class="delete-button" type="button" data-delete-task="${escapeHtml(task.id)}" aria-label="Verwijder ${escapeHtml(task.title)}"><i class="fa-solid fa-trash-can"></i></button></li>`).join('');
+        }
+        function renderRecentTasks() {
+            const list = $('#recentTasks'), upcoming = tasks.filter((task) => task.status !== 'completed').slice(0, 4); if (!upcoming.length) { list.innerHTML = '<li class="empty-state"><i class="fa-regular fa-calendar"></i><span>Je planning is helemaal vrij.</span></li>'; return; }
+            list.innerHTML = upcoming.map((task) => `<li class="modern-list-item compact"><span class="task-dot"></span><div class="list-item-content"><strong>${escapeHtml(task.title)}</strong><small>${task.due_date ? `<i class="fa-regular fa-calendar"></i> ${formatDate(task.due_date)}` : 'Geen deadline'}</small></div><button class="mini-complete" type="button" data-complete-task="${escapeHtml(task.id)}" aria-label="Voltooi ${escapeHtml(task.title)}"><i class="fa-solid fa-check"></i></button></li>`).join('');
+        }
+        function renderSubjects() {
+            const header = $('#subjectTableHeader');
+            const list = $('#subjectList');
+            const gradeLabels = [];
+            subjects.forEach((subject) => (subject.grades || []).forEach((entry) => {
+                if (!gradeLabels.some((label) => normalizeCsvHeader(label) === normalizeCsvHeader(entry.label))) gradeLabels.push(entry.label);
+            }));
+            gradeLabels.sort((left, right) => left.localeCompare(right, 'nl', { numeric: true, sensitivity: 'base' }));
+            header.innerHTML = `<tr><th>Vak</th>${gradeLabels.map((label) => `<th>${escapeHtml(label)}</th>`).join('')}<th>Gemiddelde</th><th aria-label="Acties"></th></tr>`;
+            if (!subjects.length) { list.innerHTML = `<tr><td class="empty-state" colspan="${gradeLabels.length + 3}"><i class="fa-solid fa-book-open"></i><span>Nog geen vakken. Voeg je eerste vak toe of importeer een cijferlijst.</span></td></tr>`; return; }
+            list.innerHTML = subjects.map((subject) => {
+                const gradesByLabel = new Map((subject.grades || []).map((entry) => [normalizeCsvHeader(entry.label), Number(entry.grade)]));
+                const average = subject.grade === null || subject.grade === undefined ? null : Number(subject.grade);
+                return `<tr><th scope="row"><span class="subject-icon"><i class="fa-solid fa-book"></i></span><span>${escapeHtml(subject.name)}</span></th>${gradeLabels.map((label) => { const grade = gradesByLabel.get(normalizeCsvHeader(label)); return `<td>${grade === undefined ? '<span class="table-dash">—</span>' : `<span class="table-grade">${grade.toFixed(1)}</span>`}</td>`; }).join('')}<td class="subject-average">${average === null ? '<span class="table-dash">—</span>' : `<span class="average-grade">${average.toFixed(1)}</span>`}</td><td><button class="delete-button" type="button" data-delete-subject="${escapeHtml(subject.id)}" aria-label="Verwijder ${escapeHtml(subject.name)}"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
+            }).join('');
+        }
+        function renderChatHistory() {
+            const chatBox = $('#chatBox'); if (!chatHistory.length) { chatBox.innerHTML = '<div class="chat-message assistant"><div class="chat-role">✨ LifeBuddy Coach</div><div class="chat-bubble">Hoi! Waarmee kan ik je vandaag helpen? We kunnen samen een haalbare volgende stap kiezen.</div></div>'; return; }
+            chatBox.innerHTML = chatHistory.map((message) => `<div class="chat-message ${message.role === 'user' ? 'user' : 'assistant'}"><div class="chat-role">${message.role === 'user' ? 'Jij' : '✨ LifeBuddy Coach'}</div><div class="chat-bubble">${escapeHtml(message.message)}</div></div>`).join(''); scrollChatToLatest();
+        }
+        function scrollChatToLatest() { const chatBox = $('#chatBox'); if (!chatBox) return; requestAnimationFrame(() => { chatBox.scrollTop = chatBox.scrollHeight; }); }
+        let buddyPreferences = { name: 'Buddy', color: 'violet', accessory: 'star', hidden: false };
+        const buddyAccessories = { star: '✨', book: '📚', leaf: '🌿', crown: '👑' };
+        function buddyStorageKey() { return `lifebuddy-buddy-${currentUser?.id || 'guest'}`; }
+        function saveBuddyPreferences() { localStorage.setItem(buddyStorageKey(), JSON.stringify(buddyPreferences)); }
+        function applyBuddyPreferences() {
+            const name = buddyPreferences.name || 'Buddy', launcher = $('#buddyLauncher'), color = ['violet', 'aqua', 'rose', 'gold'].includes(buddyPreferences.color) ? buddyPreferences.color : 'violet';
+            launcher.classList.remove('buddy-violet', 'buddy-aqua', 'buddy-rose', 'buddy-gold'); launcher.classList.add(`buddy-${color}`);
+            $('#buddyLabel').textContent = name; $('#buddyPanelName').textContent = name; $('#buddySpeech').textContent = `Hoi, ik ben ${name}!`; $('#buddyAccessory').textContent = buddyAccessories[buddyPreferences.accessory] || buddyAccessories.star; $('#buddyName').value = name;
+            document.querySelectorAll('[data-buddy-color]').forEach((button) => button.classList.toggle('selected', button.dataset.buddyColor === color));
+            document.querySelectorAll('[data-buddy-accessory]').forEach((button) => button.classList.toggle('selected', button.dataset.buddyAccessory === buddyPreferences.accessory));
+            $('#buddyWidget').hidden = Boolean(buddyPreferences.hidden); $('#restoreBuddy').hidden = !buddyPreferences.hidden;
+        }
+        function loadBuddyPreferences() {
+            try { buddyPreferences = { ...buddyPreferences, ...JSON.parse(localStorage.getItem(buddyStorageKey()) || '{}') }; } catch { /* Use the default companion when saved data is invalid. */ }
+            applyBuddyPreferences();
+        }
+        function setBuddyPanel(open) {
+            const panel = $('#buddyPanel'); panel.hidden = !open; $('#buddyLauncher').setAttribute('aria-expanded', String(open));
+            $('#buddySpeech').textContent = open ? 'Ik luister!' : `Hoi, ik ben ${buddyPreferences.name || 'Buddy'}!`;
+            if (open) { scrollChatToLatest(); requestAnimationFrame(() => $('#chatInput').focus()); }
+        }
+        function hideBuddy() { buddyPreferences.hidden = true; saveBuddyPreferences(); setBuddyPanel(false); applyBuddyPreferences(); }
+        function restoreBuddy() { buddyPreferences.hidden = false; saveBuddyPreferences(); applyBuddyPreferences(); setBuddyPanel(true); }
+        async function loadUser() {
+            const response = await apiFetch('/api/user/profile'); if (!response?.ok) return; currentUser = await response.json(); const name = currentUser.name || currentUser.email.split('@')[0], initial = name[0].toUpperCase();
+            $('#userName').textContent = name; $('#greetingName').textContent = name.split(' ')[0]; $('#userEmail').textContent = currentUser.email; $('#userAvatar').textContent = initial; $('#mobileAvatar').textContent = initial; $('#planBadge').textContent = currentUser.plan === 'pro' ? '★ Pro' : 'Free'; $('#planBadge').classList.toggle('pro', currentUser.plan === 'pro'); updateStreak(Number(currentUser.streak) || 0); loadBuddyPreferences();
+        }
+        async function loadTasks() { const response = await apiFetch('/api/tasks'); if (!response?.ok) return; tasks = await response.json(); renderTasks(); renderRecentTasks(); }
+        async function loadSubjects() { const response = await apiFetch('/api/subjects'); if (!response?.ok) return; subjects = await response.json(); renderSubjects(); }
+        async function loadStats() { const response = await apiFetch('/api/stats'); if (!response?.ok) return; dashboardStats = await response.json(); $('#statTasks').textContent = dashboardStats.tasks || 0; $('#statSubjects').textContent = dashboardStats.subjects || 0; $('#statChats').textContent = dashboardStats.chats || 0; updateStreak(Number(dashboardStats.streak) || 0); updateAnalytics(dashboardStats); }
+        async function loadChatHistory() { const response = await apiFetch('/api/chat/history'); if (!response?.ok) return; chatHistory = (await response.json()).history || []; renderChatHistory(); }
+        function setFriendStatus(message = '', type = '') { const status = $('#friendStatus'); status.textContent = message; status.className = `friend-status ${type}`.trim(); }
+        function renderFriends() {
+            const friendCount = $('#friendCount'), list = $('#friendsList'), requests = $('#friendRequests');
+            friendCount.textContent = friends.length;
+            list.innerHTML = friends.length ? friends.map((friend) => `<article class="friend-row"><span class="friend-avatar">${escapeHtml(friend.initials)}</span><div><strong>${escapeHtml(friend.name)}</strong><small><i class="fa-solid fa-fire"></i> ${Number(friend.streak) || 0} dagen · ${Number(friend.subjects) || 0} vakken</small></div><button class="friend-view-button" type="button" data-view-friend="${escapeHtml(friend.id)}" aria-label="Bekijk profiel van ${escapeHtml(friend.name)}"><i class="fa-solid fa-arrow-up-right-from-square"></i></button></article>`).join('') : '<p class="friends-empty"><i class="fa-solid fa-users"></i><span>Nodig iemand uit om jullie voortgang te delen.</span></p>';
+            const incoming = incomingRequests.map((request) => `<article class="friend-request"><span class="friend-avatar compact">${escapeHtml(request.initials)}</span><div><strong>${escapeHtml(request.name)}</strong><small>wil je toevoegen</small></div><div class="request-actions"><button type="button" data-answer-friend-request="${escapeHtml(request.id)}" data-request-status="accepted" aria-label="Accepteer ${escapeHtml(request.name)}"><i class="fa-solid fa-check"></i></button><button type="button" data-answer-friend-request="${escapeHtml(request.id)}" data-request-status="declined" aria-label="Weiger ${escapeHtml(request.name)}"><i class="fa-solid fa-xmark"></i></button></div></article>`).join('');
+            const outgoing = outgoingRequests.map((request) => `<p class="outgoing-request"><i class="fa-regular fa-clock"></i> Uitnodiging naar ${escapeHtml(request.name)} is verstuurd.</p>`).join('');
+            requests.innerHTML = incoming ? `<div class="friend-request-title">Uitnodigingen <span>${incomingRequests.length}</span></div>${incoming}` : outgoing;
+            if (incoming && outgoing) requests.insertAdjacentHTML('beforeend', outgoing);
+        }
+        async function loadFriends() {
+            const response = await apiFetch('/api/friends');
+            if (!response?.ok) return;
+            const data = await response.json();
+            friends = data.friends || []; incomingRequests = data.incomingRequests || []; outgoingRequests = data.outgoingRequests || [];
+            renderFriends();
+        }
+        async function sendFriendRequest(email) {
+            const response = await apiFetch('/api/friends/requests', { method: 'POST', body: JSON.stringify({ email }) });
+            if (!response) return;
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Uitnodiging versturen mislukt.');
+            setFriendStatus('Uitnodiging verstuurd.', 'success');
+            await loadFriends();
+        }
+        async function answerFriendRequest(id, status) {
+            const response = await apiFetch(`/api/friends/requests/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+            if (!response) return;
+            const data = await response.json();
+            if (!response.ok) return setFriendStatus(data.error || 'Uitnodiging bijwerken mislukt.', 'error');
+            setFriendStatus(status === 'accepted' ? 'Nieuwe vriend toegevoegd.' : 'Uitnodiging geweigerd.', status === 'accepted' ? 'success' : '');
+            await loadFriends();
+        }
+        function closeFriendProfile() { $('#friendProfileModal').hidden = true; document.body.classList.remove('friend-profile-open'); }
+        async function openFriendProfile(friendId) {
+            const modal = $('#friendProfileModal'), content = $('#friendProfileContent');
+            content.innerHTML = '<div class="friend-profile-loading"><i class="fa-solid fa-spinner fa-spin"></i> Profiel laden…</div>';
+            modal.hidden = false; document.body.classList.add('friend-profile-open');
+            try {
+                const response = await apiFetch(`/api/friends/${encodeURIComponent(friendId)}/profile`);
+                if (!response) return closeFriendProfile();
+                const profile = await response.json();
+                if (!response.ok) throw new Error(profile.error || 'Profiel laden mislukt.');
+                const totalTasks = Number(profile.total_tasks) || 0, completedTasks = Number(profile.completed_tasks) || 0;
+                const completion = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
+                const average = profile.average_grade === null || profile.average_grade === undefined ? '—' : Number(profile.average_grade).toFixed(1);
+                content.innerHTML = `<div class="friend-profile-hero"><span class="friend-avatar profile">${escapeHtml(profile.initials)}</span><div><span class="card-kicker">LIFEBUDDY PROFIEL</span><h2 id="friendProfileTitle">${escapeHtml(profile.name)}</h2><p><i class="fa-solid fa-fire"></i> ${Number(profile.streak) || 0} dagen streak</p></div></div><div class="friend-profile-stats"><div><strong>${completion}%</strong><span>Taken klaar</span></div><div><strong>${Number(profile.subjects) || 0}</strong><span>Vakken</span></div><div><strong>${average}</strong><span>Gemiddelde</span></div></div><div class="friend-profile-note"><i class="fa-solid fa-shield-heart"></i><p>Je ziet alleen de gedeelde voortgang van ${escapeHtml(profile.name)} — nooit privé-taken of chatberichten.</p></div>`;
+            } catch (error) { content.innerHTML = `<div class="friend-profile-error"><i class="fa-solid fa-circle-exclamation"></i><p>${escapeHtml(error.message)}</p></div>`; }
+        }
+        async function refreshData({ tasks: shouldLoadTasks = true, subjects: shouldLoadSubjects = true, chats: shouldLoadChats = false } = {}) { const requests = [loadStats()]; if (shouldLoadTasks) requests.push(loadTasks()); if (shouldLoadSubjects) requests.push(loadSubjects()); if (shouldLoadChats) requests.push(loadChatHistory()); await Promise.all(requests); }
+        async function completeTask(id) { const task = tasks.find((item) => item.id === id); if (!task || task.status === 'completed') return; const response = await apiFetch(`/api/tasks/${id}`, { method: 'PUT', body: JSON.stringify({ ...task, status: 'completed' }) }); if (response?.ok) { window.Game?.completeTask(); await refreshData({ subjects: false }); } }
+        async function deleteTask(id) { if (!window.confirm('Deze taak verwijderen?')) return; const response = await apiFetch(`/api/tasks/${id}`, { method: 'DELETE' }); if (response?.ok) await refreshData({ subjects: false }); }
+        async function deleteSubject(id) { if (!window.confirm('Dit vak verwijderen?')) return; const response = await apiFetch(`/api/subjects/${id}`, { method: 'DELETE' }); if (response?.ok) await refreshData({ tasks: false }); }
+        $('#taskForm').addEventListener('submit', async (event) => { event.preventDefault(); const title = $('#taskTitle').value.trim(); if (!title) return; const response = await apiFetch('/api/tasks', { method: 'POST', body: JSON.stringify({ title, description: $('#taskDesc').value.trim(), due_date: $('#taskDue').value }) }); if (response?.ok) { event.currentTarget.reset(); window.Game?.registerActivity(); await refreshData({ subjects: false }); } else if (response) alert(`❌ ${(await response.json()).error || 'Taak toevoegen mislukt.'}`); });
+        $('#subjectForm').addEventListener('submit', async (event) => { event.preventDefault(); const name = $('#subjectName').value.trim(); if (!name) return; const gradeValue = $('#subjectGrade').value; const label = $('#subjectGradeLabel').value.trim() || 'Cijfer'; try { const response = await apiFetch('/api/subjects', { method: 'POST', body: JSON.stringify({ name, label, grade: gradeValue === '' ? null : Number(gradeValue) }) }); if (response?.ok) { event.currentTarget.reset(); window.Game?.addSubject(); await refreshData({ tasks: false }); } else if (response) alert(`❌ ${(await response.json()).error || 'Vak toevoegen mislukt.'}`); } catch (error) { alert(`❌ ${error.message}`); } });
+
+        let csvImportSubjects = [];
+
+        function normalizeCsvHeader(value) {
+            return String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+        }
+
+        function detectCsvDelimiter(text) {
+            const firstLine = text.replace(/^\uFEFF/, '').split(/\r?\n/).find((line) => line.trim());
+            if (!firstLine) return ';';
+            return [';', ',', '\t'].reduce((best, delimiter) => {
+                const count = (firstLine.match(new RegExp(`\\${delimiter}`, 'g')) || []).length;
+                return count > best.count ? { delimiter, count } : best;
+            }, { delimiter: ';', count: -1 }).delimiter;
+        }
+
+        function parseCsvRows(text, delimiter) {
+            const rows = [], row = [];
+            let cell = '', quoted = false;
+            for (let index = 0; index < text.length; index++) {
+                const character = text[index];
+                if (character === '"') {
+                    if (quoted && text[index + 1] === '"') { cell += '"'; index++; } else quoted = !quoted;
+                } else if (!quoted && character === delimiter) {
+                    row.push(cell.trim()); cell = '';
+                } else if (!quoted && (character === '\n' || character === '\r')) {
+                    if (character === '\r' && text[index + 1] === '\n') index++;
+                    row.push(cell.trim()); cell = '';
+                    if (row.some((value) => value !== '')) rows.push(row.splice(0));
+                } else cell += character;
+            }
+            row.push(cell.trim());
+            if (row.some((value) => value !== '')) rows.push(row);
+            return rows;
+        }
+
+        function parseGrade(value) {
+            const normalized = String(value).trim().replace('%', '').replace(',', '.');
+            if (!/^\d{1,2}(\.\d+)?$/.test(normalized)) return null;
+            const grade = Number(normalized);
+            return Number.isFinite(grade) && grade >= 0 && grade <= 10 ? grade : null;
+        }
+
+        function parseGradeCsv(text) {
+            const delimiter = detectCsvDelimiter(text);
+            const rows = parseCsvRows(text.replace(/^\uFEFF/, ''), delimiter);
+            if (rows.length < 1) throw new Error('Het bestand is leeg.');
+
+            const headers = rows[0].map(normalizeCsvHeader);
+            const subjectColumn = headers.findIndex((header) => /^(vak|vakken|subject|course|naam|name)$/.test(header));
+            const periodColumns = headers.map((header, index) => /(periode|period|toets|exam|tentamen|cijfer|grade|score|resultaat|eindcijfer|gemiddelde)/.test(header) ? index : -1).filter((index) => index >= 0);
+            const hasHeader = subjectColumn >= 0 || periodColumns.length > 0;
+            const nameColumn = subjectColumn >= 0 ? subjectColumn : 0;
+            const gradeColumns = hasHeader ? (periodColumns.length ? periodColumns.filter((index) => index !== nameColumn) : headers.map((_, index) => index).filter((index) => index !== nameColumn)) : headers.map((_, index) => index).filter((index) => index !== nameColumn);
+            const gradesBySubject = new Map();
+            let ignoredRows = 0;
+
+            rows.slice(hasHeader ? 1 : 0).forEach((row) => {
+                const name = String(row[nameColumn] || '').trim().replace(/\s+/g, ' ');
+                const grades = gradeColumns.map((column, position) => {
+                    const grade = parseGrade(row[column] || '');
+                    if (grade === null) return null;
+                    const label = hasHeader ? String(rows[0][column] || '').trim() : `Cijfer ${position + 1}`;
+                    return { label: label || `Cijfer ${position + 1}`, grade };
+                }).filter(Boolean);
+                if (!name || !grades.length) { ignoredRows++; return; }
+                const key = normalizeCsvHeader(name);
+                const current = gradesBySubject.get(key) || { name, grades: [] };
+                current.grades.push(...grades);
+                gradesBySubject.set(key, current);
+            });
+
+            const subjects = [...gradesBySubject.values()];
+            if (!subjects.length) throw new Error('Geen geldige vakken en cijfers gevonden. Gebruik bijvoorbeeld “Vak; Cijfer”.');
+            return { subjects, ignoredRows, delimiter };
+        }
+
+        function setCsvStatus(message, type = '') {
+            const status = $('#csvImportStatus');
+            status.textContent = message;
+            status.className = `csv-import-status ${type}`.trim();
+        }
+
+        function clearCsvImport(message = 'Nog geen bestand gekozen.') {
+            csvImportSubjects = [];
+            $('#csvFileInput').value = '';
+            $('#csvPreview').hidden = true;
+            $('#csvPreview').innerHTML = '';
+            $('#csvImportActions').hidden = true;
+            setCsvStatus(message);
+        }
+
+        $('#csvFileInput').addEventListener('change', async (event) => {
+            const file = event.target.files?.[0];
+            if (!file) return clearCsvImport();
+            if (!file.name.toLowerCase().endsWith('.csv')) { clearCsvImport('Kies een bestand met de extensie .csv.'); $('#csvImportStatus').classList.add('error'); return; }
+            if (file.size > 2 * 1024 * 1024) { clearCsvImport('Dit CSV-bestand is te groot. Gebruik maximaal 2 MB.'); $('#csvImportStatus').classList.add('error'); return; }
+
+            try {
+                const result = parseGradeCsv(await file.text());
+                csvImportSubjects = result.subjects;
+                const examples = result.subjects.slice(0, 5).map((subject) => `<li><span>${escapeHtml(subject.name)}</span><strong>${subject.grades.map((entry) => `${escapeHtml(entry.label)}: ${entry.grade.toFixed(1)}`).join(' · ')}</strong></li>`).join('');
+                const totalGrades = result.subjects.reduce((total, subject) => total + subject.grades.length, 0);
+                $('#csvPreview').innerHTML = `<div class="csv-preview-heading"><strong>${result.subjects.length} vak${result.subjects.length === 1 ? '' : 'ken'} en ${totalGrades} cijfer${totalGrades === 1 ? '' : 's'} klaar voor import</strong><span>${result.ignoredRows ? `${result.ignoredRows} rij${result.ignoredRows === 1 ? '' : 'en'} overgeslagen` : 'Alle rijen zijn geldig'}</span></div><ul>${examples}</ul>${result.subjects.length > 5 ? `<p>+ ${result.subjects.length - 5} meer vakken</p>` : ''}`;
+                $('#csvPreview').hidden = false;
+                $('#csvImportActions').hidden = false;
+                setCsvStatus(`“${file.name}” is gecontroleerd. Bekijk de preview en bevestig de import.`, 'ready');
+            } catch (error) {
+                clearCsvImport(error.message);
+                $('#csvImportStatus').classList.add('error');
+            }
+        });
+
+        $('#clearCsvImport').addEventListener('click', () => clearCsvImport());
+        $('#confirmCsvImport').addEventListener('click', async () => {
+            if (!csvImportSubjects.length) return;
+            const button = $('#confirmCsvImport');
+            button.disabled = true;
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Importeren…';
+            setCsvStatus('Cijfers worden veilig opgeslagen…');
+            try {
+                const response = await apiFetch('/api/subjects/import', { method: 'POST', body: JSON.stringify({ subjects: csvImportSubjects }) });
+                if (!response) return;
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Importeren mislukt.');
+                window.Game?.registerActivity();
+                await refreshData({ tasks: false });
+                csvImportSubjects = [];
+                $('#csvFileInput').value = '';
+                $('#csvPreview').hidden = true;
+                $('#csvImportActions').hidden = true;
+                setCsvStatus(`Klaar: ${data.gradesSaved} cijfers opgeslagen voor ${data.imported} vakken. Je streak is ${data.streak} dag${data.streak === 1 ? '' : 'en'}.`, 'success');
+            } catch (error) {
+                setCsvStatus(error.message, 'error');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '<i class="fa-solid fa-file-import"></i> Importeer cijfers';
+            }
+        });
+        $('#chatForm').addEventListener('submit', async (event) => {
+            event.preventDefault(); const input = $('#chatInput'), message = input.value.trim(); if (!message) return; const chatBox = $('#chatBox'); chatBox.insertAdjacentHTML('beforeend', `<div class="chat-message user"><div class="chat-role">Jij</div><div class="chat-bubble">${escapeHtml(message)}</div></div><div class="chat-message assistant" id="typingMessage"><div class="chat-role">✨ LifeBuddy Coach</div><div class="chat-bubble typing-indicator"><span></span><span></span><span></span></div></div>`); input.value = ''; chatBox.scrollTop = chatBox.scrollHeight;
+            try { const response = await apiFetch('/api/chat', { method: 'POST', body: JSON.stringify({ message }) }); $('#typingMessage')?.remove(); if (response?.ok) { const data = await response.json(); chatHistory = data.history || []; renderChatHistory(); window.Game?.sendChat(); await loadStats(); } else if (response) { const error = await response.json(); chatBox.insertAdjacentHTML('beforeend', `<div class="chat-message assistant"><div class="chat-role">✨ LifeBuddy Coach</div><div class="chat-bubble error-bubble">${escapeHtml(error.error || 'Er ging iets mis.')}</div></div>`); } } catch { $('#typingMessage')?.remove(); chatBox.insertAdjacentHTML('beforeend', '<div class="chat-message assistant"><div class="chat-role">✨ LifeBuddy Coach</div><div class="chat-bubble error-bubble">Verbinding mislukt. Probeer het opnieuw.</div></div>'); } chatBox.scrollTop = chatBox.scrollHeight;
+        });
+        $('#buddyLauncher').addEventListener('click', () => setBuddyPanel($('#buddyPanel').hidden));
+        $('#closeBuddyPanel').addEventListener('click', () => setBuddyPanel(false));
+        $('#hideBuddy').addEventListener('click', hideBuddy); $('#restoreBuddy').addEventListener('click', restoreBuddy);
+        $('#toggleBuddyCustomizer').addEventListener('click', () => { const customizer = $('#buddyCustomizer'); customizer.hidden = !customizer.hidden; if (!customizer.hidden) $('#buddyName').focus(); });
+        $('#buddyName').addEventListener('change', (event) => { buddyPreferences.name = event.target.value.trim().slice(0, 18) || 'Buddy'; saveBuddyPreferences(); applyBuddyPreferences(); });
+        document.querySelectorAll('[data-buddy-color]').forEach((button) => button.addEventListener('click', () => { buddyPreferences.color = button.dataset.buddyColor; saveBuddyPreferences(); applyBuddyPreferences(); }));
+        document.querySelectorAll('[data-buddy-accessory]').forEach((button) => button.addEventListener('click', () => { buddyPreferences.accessory = button.dataset.buddyAccessory; saveBuddyPreferences(); applyBuddyPreferences(); }));
+        $('#toggleFriendInvite').addEventListener('click', () => { const form = $('#friendInviteForm'); form.hidden = !form.hidden; if (!form.hidden) $('#friendEmail').focus(); });
+        $('#friendInviteForm').addEventListener('submit', async (event) => { event.preventDefault(); const input = $('#friendEmail'), email = input.value.trim(); if (!email) return; try { await sendFriendRequest(email); event.currentTarget.reset(); event.currentTarget.hidden = true; } catch (error) { setFriendStatus(error.message, 'error'); } });
+        $('#closeFriendProfile').addEventListener('click', closeFriendProfile); $('#closeFriendProfileButton').addEventListener('click', closeFriendProfile);
+        document.addEventListener('keydown', (event) => { if (event.key !== 'Escape') return; if (!$('#friendProfileModal').hidden) return closeFriendProfile(); if (!$('#buddyPanel').hidden) setBuddyPanel(false); });
+        document.addEventListener('click', async (event) => {
+            const completeButton = event.target.closest('[data-complete-task]'); if (completeButton) return completeTask(completeButton.dataset.completeTask);
+            const deleteTaskButton = event.target.closest('[data-delete-task]'); if (deleteTaskButton) return deleteTask(deleteTaskButton.dataset.deleteTask);
+            const deleteSubjectButton = event.target.closest('[data-delete-subject]'); if (deleteSubjectButton) return deleteSubject(deleteSubjectButton.dataset.deleteSubject);
+            const requestButton = event.target.closest('[data-answer-friend-request]'); if (requestButton) return answerFriendRequest(requestButton.dataset.answerFriendRequest, requestButton.dataset.requestStatus);
+            const friendButton = event.target.closest('[data-view-friend]'); if (friendButton) return openFriendProfile(friendButton.dataset.viewFriend);
+        });
+        function showPage(page) { document.querySelectorAll('.sidebar-nav-item').forEach((button) => button.classList.toggle('active', button.dataset.page === page)); document.querySelectorAll('.dashboard-page').forEach((section) => section.classList.toggle('active', section.id === `page-${page}`)); document.body.classList.remove('sidebar-open'); $('#sidebarToggle').setAttribute('aria-expanded', 'false'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        document.querySelectorAll('.sidebar-nav-item').forEach((button) => button.addEventListener('click', () => showPage(button.dataset.page))); $('#openTasks').addEventListener('click', () => showPage('tasks')); $('#viewAllTasks').addEventListener('click', () => showPage('tasks')); $('#viewAchievements').addEventListener('click', () => showPage('achievements')); $('#sidebarToggle').addEventListener('click', () => { const open = document.body.classList.toggle('sidebar-open'); $('#sidebarToggle').setAttribute('aria-expanded', String(open)); }); $('#sidebarOverlay').addEventListener('click', () => { document.body.classList.remove('sidebar-open'); $('#sidebarToggle').setAttribute('aria-expanded', 'false'); }); $('#logoutBtn').addEventListener('click', () => { localStorage.removeItem('token'); window.location.replace('/'); });
+        document.querySelectorAll('.analytics-tabs button').forEach((button) => button.addEventListener('click', () => { document.querySelectorAll('.analytics-tabs button').forEach((tab) => tab.classList.toggle('active', tab === button)); if (dashboardStats) updateAnalytics(dashboardStats); })); document.querySelectorAll('.class-card').forEach((button) => button.addEventListener('click', () => window.Game?.setClass(button.dataset.class)));
+        $('#upgradeBtn')?.addEventListener('click', async () => { const response = await apiFetch('/api/subscription/upgrade', { method: 'POST' }); if (!response?.ok) return alert('❌ Upgrade mislukt. Probeer het opnieuw.'); const data = await response.json(); localStorage.setItem('token', data.token); window.location.reload(); });
+        function updateTodayLabel() { $('#todayLabel').textContent = new Intl.DateTimeFormat(window.LifeBuddyI18n?.getLanguage() === 'en' ? 'en-GB' : 'nl-NL', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date()).toUpperCase(); }
+        document.addEventListener('lifebuddy-languagechange', () => { updateTodayLabel(); renderTasks(); renderRecentTasks(); renderSubjects(); renderChatHistory(); if (dashboardStats) updateAnalytics(dashboardStats); if (currentUser) updateStreak(Number(currentUser.streak) || 0); renderFriends(); });
+        updateTodayLabel();
+        async function init() { await Promise.all([loadUser(), loadTasks(), loadSubjects(), loadStats(), loadChatHistory(), loadFriends()]); window.Game?.updateUI(); }
+        init();
+    </script>
+</body>
+</html>
