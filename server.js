@@ -6,6 +6,7 @@ const sqlite3 = require('sqlite3').verbose();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
+const Groq = require('groq-sdk');
 
 dotenv.config();
 
@@ -22,7 +23,7 @@ app.use(express.static('public'));
 // ============================================================
 // DATABASE
 // ============================================================
-const db = new sqlite3.Database(process.env.DATABASE_PATH, (err) => {
+const db = new sqlite3.Database(process.env.DATABASE_PATH || './database/lifebuddy.db', (err) => {
     if (err) {
         console.error('❌ Database error:', err.message);
     } else {
@@ -780,7 +781,7 @@ app.get('/api/friends/:friendId/profile', authenticateToken, async (req, res) =>
     }
 });
 
-// ---------- CHAT (Met Ollama - Directe HTTP API) ----------
+// ---------- CHAT (Met Groq AI) ----------
 app.post('/api/chat', authenticateToken, async (req, res) => {
     const { message } = req.body;
 
@@ -801,38 +802,30 @@ app.post('/api/chat', authenticateToken, async (req, res) => {
     });
 
     try {
-        // Gebruik fetch om Ollama API aan te roepen
-        const response = await fetch('http://localhost:11434/api/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: 'llama3.2:3b',
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'Je bent een behulpzame studie-assistent die ALTIJD in het Nederlands antwoordt. Geef korte, praktische antwoorden.'
-                    },
-                    {
-                        role: 'user',
-                        content: `Beantwoord in het Nederlands: ${message}`
-                    }
-                ],
-                options: {
-                    temperature: 0.7,
-                    num_predict: 150
-                },
-                stream: false
-            })
+        // Initialize Groq client
+        const groq = new Groq({
+            apiKey: process.env.GROQ_API_KEY
         });
 
-        if (!response.ok) {
-            throw new Error(`Ollama error: ${response.status}`);
-        }
+        const completion = await groq.chat.completions.create({
+            messages: [
+                {
+                    role: "system",
+                    content: "Je bent een behulpzame studie-assistent die ALTIJD in het Nederlands antwoordt. Geef korte, praktische antwoorden."
+                },
+                {
+                    role: "user",
+                    content: message
+                }
+            ],
+            model: "mixtral-8x7b-32768",
+            temperature: 0.7,
+            max_tokens: 150,
+            top_p: 1,
+            stream: false
+        });
 
-        const data = await response.json();
-        const aiResponse = data.message?.content || "Ik begrijp het niet helemaal. Kun je het anders vragen?";
+        const aiResponse = completion.choices[0]?.message?.content || "Ik begrijp het niet helemaal. Kun je het anders vragen?";
 
         // Sla AI-antwoord op
         const aiId = uuidv4();
@@ -860,8 +853,8 @@ app.post('/api/chat', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('❌ AI Error:', error.message);
         
-        // Fallback als Ollama niet draait
-        const fallbackResponse = "Ollama is niet gestart! Start Ollama op de achtergrond en probeer opnieuw. 🚀";
+        // Fallback als Groq niet werkt
+        const fallbackResponse = "De AI-assistent is momenteel niet beschikbaar. Probeer het later opnieuw. 📚";
         const aiId = uuidv4();
         db.run(
             'INSERT INTO chat_history (id, user_id, message, role) VALUES (?, ?, ?, ?)',
@@ -960,42 +953,31 @@ app.post('/api/subscription/upgrade', authenticateToken, (req, res) => {
 // ---------- TEST AI ENDPOINT ----------
 app.get('/api/test-ai', async (req, res) => {
     try {
-        const response = await fetch('http://localhost:11434/api/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: 'llama3.2:3b',
-                messages: [
-                    {
-                        role: 'user',
-                        content: 'Zeg hallo in het Nederlands'
-                    }
-                ],
-                options: {
-                    temperature: 0.7,
-                },
-                stream: false
-            })
+        const groq = new Groq({
+            apiKey: process.env.GROQ_API_KEY
         });
 
-        if (!response.ok) {
-            throw new Error(`Ollama error: ${response.status}`);
-        }
+        const completion = await groq.chat.completions.create({
+            messages: [
+                {
+                    role: "user",
+                    content: "Zeg hallo in het Nederlands"
+                }
+            ],
+            model: "mixtral-8x7b-32768",
+            temperature: 0.7,
+            max_tokens: 50,
+        });
 
-        const data = await response.json();
         res.json({ 
             success: true, 
-            response: data.message?.content || 'Geen antwoord',
-            full: data 
+            response: completion.choices[0]?.message?.content || 'Geen antwoord'
         });
     } catch (error) {
         console.error('❌ Test AI Error:', error.message);
         res.json({ 
             success: false, 
-            error: error.message,
-            stack: error.stack 
+            error: error.message
         });
     }
 });
@@ -1020,16 +1002,7 @@ app.get('*', (req, res) => {
 // ============================================================
 app.listen(PORT, () => {
     console.log(`🚀 LifeBuddy server running on http://localhost:${PORT}`);
-    console.log(`📁 Database: ${process.env.DATABASE_PATH}`);
-    console.log(`🤖 AI Model: llama3.2:3b (via Ollama - lokaal)`);
-    
-    // Check of Ollama draait
-    fetch('http://localhost:11434/api/tags')
-        .then(() => {
-            console.log('✅ Ollama is beschikbaar!');
-        })
-        .catch(() => {
-            console.log('⚠️  Ollama is niet gestart! Start Ollama op de achtergrond.');
-            console.log('📝  Typ in een nieuwe terminal: ollama serve');
-        });
+    console.log(`📁 Database: ${process.env.DATABASE_PATH || './database/lifebuddy.db'}`);
+    console.log(`🤖 AI Model: Mixtral-8x7B (via Groq Cloud)`);
+    console.log(`✅ Groq AI is configured!`);
 });
