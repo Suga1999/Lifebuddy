@@ -124,6 +124,90 @@ function initDatabase() {
         });
     });
 
+    db.run(`
+        CREATE TABLE IF NOT EXISTS word_lists (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT,
+            term_language TEXT,
+            definition_language TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    `, (error) => {
+        if (error) return console.error('❌ Word lists table migration failed:', error.message);
+        db.run('CREATE INDEX IF NOT EXISTS idx_word_lists_user_id ON word_lists(user_id)');
+    });
+
+    db.run(`
+        CREATE TABLE IF NOT EXISTS word_entries (
+            id TEXT PRIMARY KEY,
+            list_id TEXT NOT NULL,
+            term TEXT NOT NULL,
+            definition TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(list_id, term),
+            FOREIGN KEY (list_id) REFERENCES word_lists(id)
+        )
+    `, (error) => {
+        if (error) return console.error('❌ Word entries table migration failed:', error.message);
+        db.run('CREATE INDEX IF NOT EXISTS idx_word_entries_list_id ON word_entries(list_id)');
+    });
+
+    db.run(`
+        CREATE TABLE IF NOT EXISTS practice_sessions (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            list_id TEXT NOT NULL,
+            method TEXT NOT NULL,
+            direction TEXT NOT NULL DEFAULT 'term_definition',
+            started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            completed_at DATETIME,
+            score REAL,
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (list_id) REFERENCES word_lists(id)
+        )
+    `, (error) => {
+        if (error) return console.error('❌ Practice sessions table migration failed:', error.message);
+        db.run('CREATE INDEX IF NOT EXISTS idx_practice_sessions_user_list ON practice_sessions(user_id, list_id)');
+    });
+
+    db.run(`
+        CREATE TABLE IF NOT EXISTS practice_session_entries (
+            id TEXT PRIMARY KEY,
+            session_id TEXT NOT NULL,
+            entry_id TEXT NOT NULL,
+            position INTEGER NOT NULL,
+            direction TEXT NOT NULL,
+            is_correct INTEGER,
+            attempts INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY (session_id) REFERENCES practice_sessions(id),
+            FOREIGN KEY (entry_id) REFERENCES word_entries(id),
+            UNIQUE(session_id, entry_id)
+        )
+    `, (error) => {
+        if (error) return console.error('❌ Practice session entries migration failed:', error.message);
+        db.run('CREATE INDEX IF NOT EXISTS idx_practice_session_entries_session ON practice_session_entries(session_id, position)');
+    });
+
+    db.run(`
+        CREATE TABLE IF NOT EXISTS word_progress (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            entry_id TEXT NOT NULL,
+            correct_count INTEGER NOT NULL DEFAULT 0,
+            wrong_count INTEGER NOT NULL DEFAULT 0,
+            last_practiced_at DATETIME,
+            UNIQUE(user_id, entry_id),
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (entry_id) REFERENCES word_entries(id)
+        )
+    `, (error) => {
+        if (error) return console.error('❌ Word progress table migration failed:', error.message);
+        db.run('CREATE INDEX IF NOT EXISTS idx_word_progress_user_entry ON word_progress(user_id, entry_id)');
+    });
+
     // Migrate existing installations without requiring users to recreate their data.
     db.all('PRAGMA table_info(users)', (err, columns) => {
         if (err) {
@@ -642,6 +726,465 @@ app.delete('/api/subjects', authenticateToken, async (req, res) => {
     }
 });
 
+// ---------- STUDY ROOM: WORD LISTS ----------
+const PRACTICE_METHODS = new Set(['test', 'multiple_choice', 'flashcards', 'spelling', 'mixed']);
+const PRACTICE_DIRECTIONS = new Set(['term_definition', 'definition_term', 'mixed']);
+
+function cleanStudyText(value, maximumLength) {
+    return typeof value === 'string' ? value.trim().replace(/\s+/g, ' ').slice(0, maximumLength) : '';
+}
+
+function normalizedStudyValue(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase('nl-NL')
+        .replace(/[^\p{L}\p{N}]+/gu, ' ')
+        .trim()
+        .replace(/\s+/g, ' ');
+}
+
+function acceptedStudyAnswers(value) {
+    const fullValue = normalizedStudyValue(value);
+    const alternatives = String(value || '').split('/').map(normalizedStudyValue).filter(Boolean);
+    return [...new Set([fullValue, ...alternatives].filter(Boolean))];
+}
+
+function answerMatchesStudyValue(answer, expected) {
+    const normalizedAnswer = normalizedStudyValue(answer);
+    return Boolean(normalizedAnswer) && acceptedStudyAnswers(expected).includes(normalizedAnswer);
+}
+
+function shuffleStudyItems(items) {
+    const result = [...items];
+    for (let index = result.length - 1; index > 0; index--) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+    }
+    return result;
+}
+
+function resolvePracticeDirection(method, direction) {
+    if (method === 'mixed' || direction === 'mixed') {
+        return Math.random() < 0.5 ? 'term_definition' : 'definition_term';
+    }
+    return direction;
+}
+
+function practicePrompt(entry, direction, method) {
+    if (method === 'spelling') return 'Bekijk het woord goed en typ het daarna exact over.';
+    return direction === 'definition_term' ? entry.definition : entry.term;
+}
+
+function practiceExpectedAnswer(entry, direction, method) {
+    if (method === 'spelling') return entry.term;
+    return direction === 'definition_term' ? entry.term : entry.definition;
+}
+
+function studyHint(value) {
+    const characters = [...String(value || '')];
+    let revealed = 0;
+    return characters.map((character) => {
+        if (!/[\p{L}\p{N}]/u.test(character)) return character;
+        revealed++;
+        return revealed <= 2 ? character : '•';
+    }).join('');
+}
+
+function validateWordEntry(rawEntry) {
+    const term = cleanStudyText(rawEntry?.term, 250);
+    const definition = cleanStudyText(rawEntry?.definition, 500);
+    if (!term || !definition) throw new Error('Elke term heeft een woord en definitie nodig');
+    return { term, definition };
+}
+
+async function getOwnedWordList(listId, userId) {
+    const lists = await databaseAll('SELECT * FROM word_lists WHERE id = ? AND user_id = ? LIMIT 1', [listId, userId]);
+    return lists[0] || null;
+}
+
+async function getWordEntriesWithProgress(listId, userId) {
+    return databaseAll(
+        `SELECT entries.*, COALESCE(progress.correct_count, 0) AS correct_count,
+                COALESCE(progress.wrong_count, 0) AS wrong_count, progress.last_practiced_at
+         FROM word_entries AS entries
+         LEFT JOIN word_progress AS progress ON progress.entry_id = entries.id AND progress.user_id = ?
+         WHERE entries.list_id = ?
+         ORDER BY entries.created_at ASC, entries.term COLLATE NOCASE ASC`,
+        [userId, listId]
+    );
+}
+
+function normalizePracticeSelection(selection) {
+    if (Array.isArray(selection)) return { mode: 'selected', entryIds: selection, count: 'all' };
+    if (typeof selection !== 'object' || !selection) return { mode: 'all', entryIds: [], count: 'all' };
+    const mode = ['all', 'difficult', 'unpracticed', 'selected'].includes(selection.mode || selection.filter)
+        ? (selection.mode || selection.filter)
+        : 'all';
+    return {
+        mode,
+        entryIds: Array.isArray(selection.entryIds) ? selection.entryIds.map(String) : [],
+        count: selection.count === 'all' ? 'all' : Number(selection.count) || 'all'
+    };
+}
+
+function createPracticeQuestion(session, sessionEntry, entry, candidates) {
+    const method = session.method === 'mixed' ? 'test' : session.method;
+    const direction = sessionEntry.direction;
+    const expectedAnswer = practiceExpectedAnswer(entry, direction, method);
+    const question = {
+        entryId: entry.id,
+        method,
+        direction,
+        prompt: practicePrompt(entry, direction, method),
+        hint: studyHint(expectedAnswer),
+        position: sessionEntry.position
+    };
+
+    if (method === 'multiple_choice') {
+        const alternatives = shuffleStudyItems(candidates.filter((candidate) => candidate.id !== entry.id))
+            .map((candidate) => practiceExpectedAnswer(candidate, direction, method))
+            .filter((value, index, values) => normalizedStudyValue(value) && values.findIndex((item) => normalizedStudyValue(item) === normalizedStudyValue(value)) === index)
+            .slice(0, 3);
+        question.options = shuffleStudyItems([expectedAnswer, ...alternatives]);
+    }
+    if (method === 'flashcards') question.reveal = expectedAnswer;
+    if (method === 'spelling') question.spellingPreview = entry.term;
+    return question;
+}
+
+async function buildNextPracticeQuestion(session) {
+    const remaining = await databaseAll(
+        `SELECT session_entries.*, entries.term, entries.definition
+         FROM practice_session_entries AS session_entries
+         JOIN word_entries AS entries ON entries.id = session_entries.entry_id
+         WHERE session_entries.session_id = ? AND session_entries.is_correct IS NULL
+         ORDER BY session_entries.position ASC LIMIT 1`,
+        [session.id]
+    );
+    if (!remaining.length) return null;
+    const candidates = await databaseAll('SELECT id, term, definition FROM word_entries WHERE list_id = ?', [session.list_id]);
+    return createPracticeQuestion(session, remaining[0], remaining[0], candidates);
+}
+
+async function buildPracticeResult(sessionId) {
+    const totals = await databaseAll(
+        `SELECT COUNT(*) AS total, COALESCE(SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END), 0) AS correct,
+                COALESCE(SUM(CASE WHEN is_correct = 0 THEN 1 ELSE 0 END), 0) AS wrong
+         FROM practice_session_entries WHERE session_id = ?`,
+        [sessionId]
+    );
+    const wrongEntries = await databaseAll('SELECT entry_id FROM practice_session_entries WHERE session_id = ? AND is_correct = 0 ORDER BY position', [sessionId]);
+    const total = Number(totals[0]?.total) || 0;
+    const correct = Number(totals[0]?.correct) || 0;
+    return {
+        total,
+        correct,
+        wrong: Number(totals[0]?.wrong) || 0,
+        score: total ? Math.round((correct / total) * 100) : 0,
+        wrongEntryIds: wrongEntries.map((item) => item.entry_id)
+    };
+}
+
+app.get('/api/word-lists', authenticateToken, async (req, res) => {
+    try {
+        const lists = await databaseAll(
+            `SELECT lists.*,
+                (SELECT COUNT(*) FROM word_entries WHERE list_id = lists.id) AS entry_count,
+                (SELECT COUNT(*) FROM word_entries AS entries
+                    LEFT JOIN word_progress AS progress ON progress.entry_id = entries.id AND progress.user_id = lists.user_id
+                    WHERE entries.list_id = lists.id AND (COALESCE(progress.correct_count, 0) + COALESCE(progress.wrong_count, 0)) > 0) AS practiced_count,
+                (SELECT COUNT(*) FROM word_entries AS entries
+                    LEFT JOIN word_progress AS progress ON progress.entry_id = entries.id AND progress.user_id = lists.user_id
+                    WHERE entries.list_id = lists.id AND COALESCE(progress.wrong_count, 0) > COALESCE(progress.correct_count, 0)) AS difficult_count
+             FROM word_lists AS lists WHERE lists.user_id = ? ORDER BY lists.created_at DESC`,
+            [req.user.id]
+        );
+        res.json(lists);
+    } catch (error) {
+        console.error('❌ Word lists fetch failed:', error.message);
+        res.status(500).json({ error: 'Could not load word lists' });
+    }
+});
+
+app.post('/api/word-lists', authenticateToken, async (req, res) => {
+    const title = cleanStudyText(req.body?.title, 120);
+    const description = cleanStudyText(req.body?.description, 1000);
+    if (!title) return res.status(400).json({ error: 'Geef je woordenlijst een titel' });
+    try {
+        const list = {
+            id: uuidv4(), user_id: req.user.id, title, description: description || null,
+            termLanguage: cleanStudyText(req.body?.termLanguage, 50) || null,
+            definitionLanguage: cleanStudyText(req.body?.definitionLanguage, 50) || null
+        };
+        await databaseRun(
+            'INSERT INTO word_lists (id, user_id, title, description, term_language, definition_language) VALUES (?, ?, ?, ?, ?, ?)',
+            [list.id, list.user_id, list.title, list.description, list.termLanguage, list.definitionLanguage]
+        );
+        res.status(201).json({ list: { ...list, entry_count: 0, practiced_count: 0, difficult_count: 0 } });
+    } catch (error) {
+        res.status(500).json({ error: 'Could not create word list' });
+    }
+});
+
+app.get('/api/word-lists/:id', authenticateToken, async (req, res) => {
+    try {
+        const list = await getOwnedWordList(req.params.id, req.user.id);
+        if (!list) return res.status(404).json({ error: 'Word list not found' });
+        const entries = await getWordEntriesWithProgress(list.id, req.user.id);
+        res.json({ list, entries });
+    } catch (error) {
+        res.status(500).json({ error: 'Could not load word list' });
+    }
+});
+
+app.put('/api/word-lists/:id', authenticateToken, async (req, res) => {
+    const title = cleanStudyText(req.body?.title, 120);
+    const description = cleanStudyText(req.body?.description, 1000);
+    if (!title) return res.status(400).json({ error: 'Geef je woordenlijst een titel' });
+    try {
+        const result = await databaseRun(
+            `UPDATE word_lists SET title = ?, description = ?, term_language = ?, definition_language = ?
+             WHERE id = ? AND user_id = ?`,
+            [title, description || null, cleanStudyText(req.body?.termLanguage, 50) || null, cleanStudyText(req.body?.definitionLanguage, 50) || null, req.params.id, req.user.id]
+        );
+        if (!result.changes) return res.status(404).json({ error: 'Word list not found' });
+        res.json({ list: await getOwnedWordList(req.params.id, req.user.id) });
+    } catch (error) {
+        res.status(500).json({ error: 'Could not update word list' });
+    }
+});
+
+app.delete('/api/word-lists/:id', authenticateToken, async (req, res) => {
+    try {
+        const list = await getOwnedWordList(req.params.id, req.user.id);
+        if (!list) return res.status(404).json({ error: 'Word list not found' });
+        await databaseRun('BEGIN TRANSACTION');
+        try {
+            await databaseRun('DELETE FROM word_progress WHERE entry_id IN (SELECT id FROM word_entries WHERE list_id = ?)', [list.id]);
+            await databaseRun('DELETE FROM practice_session_entries WHERE session_id IN (SELECT id FROM practice_sessions WHERE list_id = ? AND user_id = ?)', [list.id, req.user.id]);
+            await databaseRun('DELETE FROM practice_sessions WHERE list_id = ? AND user_id = ?', [list.id, req.user.id]);
+            await databaseRun('DELETE FROM word_entries WHERE list_id = ?', [list.id]);
+            await databaseRun('DELETE FROM word_lists WHERE id = ? AND user_id = ?', [list.id, req.user.id]);
+            await databaseRun('COMMIT');
+        } catch (transactionError) {
+            await databaseRun('ROLLBACK').catch(() => {});
+            throw transactionError;
+        }
+        res.json({ success: true });
+    } catch (error) {
+        console.error('❌ Delete word list failed:', error.message);
+        res.status(500).json({ error: 'Could not delete word list' });
+    }
+});
+
+app.post('/api/word-lists/:id/entries', authenticateToken, async (req, res) => {
+    try {
+        const list = await getOwnedWordList(req.params.id, req.user.id);
+        if (!list) return res.status(404).json({ error: 'Word list not found' });
+        const entry = validateWordEntry(req.body);
+        const duplicate = await databaseAll('SELECT id FROM word_entries WHERE list_id = ? AND lower(term) = lower(?)', [list.id, entry.term]);
+        if (duplicate.length) return res.status(409).json({ error: 'Deze term staat al in je woordenlijst' });
+        const id = uuidv4();
+        await databaseRun('INSERT INTO word_entries (id, list_id, term, definition) VALUES (?, ?, ?, ?)', [id, list.id, entry.term, entry.definition]);
+        const entries = await getWordEntriesWithProgress(list.id, req.user.id);
+        res.status(201).json({ entry: entries.find((item) => item.id === id) });
+    } catch (error) {
+        res.status(400).json({ error: error.message || 'Could not add word entry' });
+    }
+});
+
+app.put('/api/word-lists/:id/entries/:entryId', authenticateToken, async (req, res) => {
+    try {
+        const list = await getOwnedWordList(req.params.id, req.user.id);
+        if (!list) return res.status(404).json({ error: 'Word list not found' });
+        const entry = validateWordEntry(req.body);
+        const duplicate = await databaseAll('SELECT id FROM word_entries WHERE list_id = ? AND lower(term) = lower(?) AND id != ?', [list.id, entry.term, req.params.entryId]);
+        if (duplicate.length) return res.status(409).json({ error: 'Deze term staat al in je woordenlijst' });
+        const result = await databaseRun('UPDATE word_entries SET term = ?, definition = ? WHERE id = ? AND list_id = ?', [entry.term, entry.definition, req.params.entryId, list.id]);
+        if (!result.changes) return res.status(404).json({ error: 'Word entry not found' });
+        const entries = await getWordEntriesWithProgress(list.id, req.user.id);
+        res.json({ entry: entries.find((item) => item.id === req.params.entryId) });
+    } catch (error) {
+        res.status(400).json({ error: error.message || 'Could not update word entry' });
+    }
+});
+
+app.delete('/api/word-lists/:id/entries/:entryId', authenticateToken, async (req, res) => {
+    try {
+        const list = await getOwnedWordList(req.params.id, req.user.id);
+        if (!list) return res.status(404).json({ error: 'Word list not found' });
+        const entry = await databaseAll('SELECT id FROM word_entries WHERE id = ? AND list_id = ?', [req.params.entryId, list.id]);
+        if (!entry.length) return res.status(404).json({ error: 'Word entry not found' });
+        await databaseRun('BEGIN TRANSACTION');
+        try {
+            await databaseRun('DELETE FROM word_progress WHERE user_id = ? AND entry_id = ?', [req.user.id, req.params.entryId]);
+            await databaseRun('DELETE FROM practice_session_entries WHERE entry_id = ?', [req.params.entryId]);
+            await databaseRun('DELETE FROM word_entries WHERE id = ? AND list_id = ?', [req.params.entryId, list.id]);
+            await databaseRun('COMMIT');
+        } catch (transactionError) {
+            await databaseRun('ROLLBACK').catch(() => {});
+            throw transactionError;
+        }
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Could not delete word entry' });
+    }
+});
+
+app.post('/api/word-lists/import', authenticateToken, async (req, res) => {
+    const title = cleanStudyText(req.body?.title, 120);
+    const description = cleanStudyText(req.body?.description, 1000);
+    if (!title) return res.status(400).json({ error: 'Geef de geïmporteerde woordenlijst een titel' });
+    if (!Array.isArray(req.body?.entries) || !req.body.entries.length) return res.status(400).json({ error: 'Geen geldige termen gevonden voor import' });
+    try {
+        const uniqueEntries = new Map();
+        req.body.entries.forEach((rawEntry) => {
+            const entry = validateWordEntry(rawEntry);
+            uniqueEntries.set(normalizedStudyValue(entry.term), entry);
+        });
+        if (!uniqueEntries.size) throw new Error('Geen geldige termen gevonden voor import');
+        const listId = uuidv4();
+        await databaseRun('BEGIN TRANSACTION');
+        try {
+            await databaseRun(
+                'INSERT INTO word_lists (id, user_id, title, description, term_language, definition_language) VALUES (?, ?, ?, ?, ?, ?)',
+                [listId, req.user.id, title, description || null, cleanStudyText(req.body?.termLanguage, 50) || null, cleanStudyText(req.body?.definitionLanguage, 50) || null]
+            );
+            for (const entry of uniqueEntries.values()) {
+                await databaseRun('INSERT INTO word_entries (id, list_id, term, definition) VALUES (?, ?, ?, ?)', [uuidv4(), listId, entry.term, entry.definition]);
+            }
+            await databaseRun('COMMIT');
+        } catch (transactionError) {
+            await databaseRun('ROLLBACK').catch(() => {});
+            throw transactionError;
+        }
+        const list = await getOwnedWordList(listId, req.user.id);
+        res.status(201).json({ success: true, list, imported: uniqueEntries.size });
+    } catch (error) {
+        res.status(400).json({ error: error.message || 'Could not import word list' });
+    }
+});
+
+app.get('/api/word-lists/:id/progress', authenticateToken, async (req, res) => {
+    try {
+        const list = await getOwnedWordList(req.params.id, req.user.id);
+        if (!list) return res.status(404).json({ error: 'Word list not found' });
+        const entries = await getWordEntriesWithProgress(list.id, req.user.id);
+        const summary = entries.reduce((result, entry) => {
+            const attempts = Number(entry.correct_count) + Number(entry.wrong_count);
+            result.total++;
+            if (!attempts) result.unpracticed++;
+            else result.practiced++;
+            if (Number(entry.wrong_count) > Number(entry.correct_count)) result.difficult++;
+            if (attempts >= 3 && Number(entry.correct_count) >= Number(entry.wrong_count) * 2) result.mastered++;
+            return result;
+        }, { total: 0, practiced: 0, unpracticed: 0, difficult: 0, mastered: 0 });
+        res.json({ summary, entries });
+    } catch (error) {
+        res.status(500).json({ error: 'Could not load progress' });
+    }
+});
+
+app.post('/api/word-lists/:id/practice/start', authenticateToken, async (req, res) => {
+    const method = PRACTICE_METHODS.has(req.body?.method) ? req.body.method : 'test';
+    const direction = PRACTICE_DIRECTIONS.has(req.body?.direction) ? req.body.direction : 'term_definition';
+    try {
+        const list = await getOwnedWordList(req.params.id, req.user.id);
+        if (!list) return res.status(404).json({ error: 'Word list not found' });
+        const allEntries = await getWordEntriesWithProgress(list.id, req.user.id);
+        const selection = normalizePracticeSelection(req.body?.selection);
+        let candidates = allEntries;
+        if (selection.mode === 'difficult') candidates = allEntries.filter((entry) => Number(entry.wrong_count) > Number(entry.correct_count));
+        if (selection.mode === 'unpracticed') candidates = allEntries.filter((entry) => Number(entry.correct_count) + Number(entry.wrong_count) === 0);
+        if (selection.mode === 'selected') {
+            const ids = new Set(selection.entryIds);
+            candidates = allEntries.filter((entry) => ids.has(entry.id));
+        }
+        if (!candidates.length) return res.status(400).json({ error: 'Geen woorden gevonden voor deze oefenselectie' });
+        if (method === 'multiple_choice' && allEntries.length < 4) {
+            return res.status(400).json({ error: 'Meerkeuze heeft minimaal vier woorden in de lijst nodig' });
+        }
+        const requestedCount = selection.count === 'all' ? candidates.length : Math.max(1, Math.min(200, Math.floor(selection.count)));
+        const sessionEntries = shuffleStudyItems(candidates).slice(0, requestedCount);
+        const session = { id: uuidv4(), user_id: req.user.id, list_id: list.id, method, direction };
+        await databaseRun('BEGIN TRANSACTION');
+        try {
+            await databaseRun('INSERT INTO practice_sessions (id, user_id, list_id, method, direction) VALUES (?, ?, ?, ?, ?)', [session.id, session.user_id, session.list_id, session.method, session.direction]);
+            for (const [position, entry] of sessionEntries.entries()) {
+                await databaseRun(
+                    'INSERT INTO practice_session_entries (id, session_id, entry_id, position, direction) VALUES (?, ?, ?, ?, ?)',
+                    [uuidv4(), session.id, entry.id, position + 1, resolvePracticeDirection(method, direction)]
+                );
+            }
+            await databaseRun('COMMIT');
+        } catch (transactionError) {
+            await databaseRun('ROLLBACK').catch(() => {});
+            throw transactionError;
+        }
+        const question = await buildNextPracticeQuestion(session);
+        updateStreak(req.user.id, () => {});
+        res.status(201).json({ session: { id: session.id, method, direction, total: sessionEntries.length }, question });
+    } catch (error) {
+        console.error('❌ Start practice failed:', error.message);
+        res.status(500).json({ error: 'Could not start practice session' });
+    }
+});
+
+app.post('/api/word-lists/:id/practice/submit', authenticateToken, async (req, res) => {
+    const sessionId = typeof req.body?.sessionId === 'string' ? req.body.sessionId : '';
+    const entryId = typeof req.body?.entryId === 'string' ? req.body.entryId : '';
+    if (!sessionId || !entryId) return res.status(400).json({ error: 'Sessie en woord zijn verplicht' });
+    try {
+        const sessionRows = await databaseAll(
+            'SELECT * FROM practice_sessions WHERE id = ? AND user_id = ? AND list_id = ? AND completed_at IS NULL LIMIT 1',
+            [sessionId, req.user.id, req.params.id]
+        );
+        const session = sessionRows[0];
+        if (!session) return res.status(404).json({ error: 'Actieve oefensessie niet gevonden' });
+        const rows = await databaseAll(
+            `SELECT session_entries.*, entries.term, entries.definition FROM practice_session_entries AS session_entries
+             JOIN word_entries AS entries ON entries.id = session_entries.entry_id
+             WHERE session_entries.session_id = ? AND session_entries.entry_id = ? AND session_entries.is_correct IS NULL LIMIT 1`,
+            [session.id, entryId]
+        );
+        const sessionEntry = rows[0];
+        if (!sessionEntry) return res.status(409).json({ error: 'Dit woord is al beantwoord of hoort niet bij deze sessie' });
+        const effectiveMethod = session.method === 'mixed' ? 'test' : session.method;
+        const expectedAnswer = practiceExpectedAnswer(sessionEntry, sessionEntry.direction, effectiveMethod);
+        const correct = effectiveMethod === 'flashcards'
+            ? req.body?.known === true
+            : answerMatchesStudyValue(req.body?.answer, expectedAnswer);
+        await databaseRun('BEGIN TRANSACTION');
+        try {
+            await databaseRun('UPDATE practice_session_entries SET is_correct = ?, attempts = attempts + 1 WHERE id = ?', [correct ? 1 : 0, sessionEntry.id]);
+            await databaseRun(
+                `INSERT INTO word_progress (id, user_id, entry_id, correct_count, wrong_count, last_practiced_at)
+                 VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                 ON CONFLICT(user_id, entry_id) DO UPDATE SET
+                    correct_count = word_progress.correct_count + excluded.correct_count,
+                    wrong_count = word_progress.wrong_count + excluded.wrong_count,
+                    last_practiced_at = CURRENT_TIMESTAMP`,
+                [uuidv4(), req.user.id, sessionEntry.entry_id, correct ? 1 : 0, correct ? 0 : 1]
+            );
+            await databaseRun('COMMIT');
+        } catch (transactionError) {
+            await databaseRun('ROLLBACK').catch(() => {});
+            throw transactionError;
+        }
+        const nextQuestion = await buildNextPracticeQuestion(session);
+        if (!nextQuestion) {
+            const result = await buildPracticeResult(session.id);
+            await databaseRun('UPDATE practice_sessions SET completed_at = CURRENT_TIMESTAMP, score = ? WHERE id = ?', [result.score, session.id]);
+            return res.json({ correct, expectedAnswer, completed: true, result });
+        }
+        res.json({ correct, expectedAnswer, completed: false, nextQuestion });
+    } catch (error) {
+        console.error('❌ Submit practice failed:', error.message);
+        res.status(500).json({ error: 'Could not save practice answer' });
+    }
+});
+
 // ---------- FRIENDS ----------
 function publicInitials(name) {
     return String(name || '?').trim().charAt(0).toUpperCase() || '?';
@@ -1009,6 +1552,10 @@ app.get('/dashboard', (req, res) => {
 
 app.get('/music', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'music.html'));
+});
+
+app.get('/studieruimte', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'studieruimte.html'));
 });
 
 app.get('*', (req, res) => {
