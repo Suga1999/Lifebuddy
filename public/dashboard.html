@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LifeBuddy – Dashboard</title>
+    <title>LifeBuddy – Jouw studiewerkruimte</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="workspace.css">
+    <link rel="stylesheet" href="buddy.css">
     <script src="/i18n.js"></script>
     <script src="/script.js" defer></script>
+    <script src="/buddy.js" defer></script>
 </head>
 <body class="dashboard-body">
-    <div class="dashboard-orb dashboard-orb-one"></div>
-    <div class="dashboard-orb dashboard-orb-two"></div>
     <div id="notificationContainer" aria-live="polite" aria-atomic="true"></div>
 
     <header class="mobile-dashboard-header">
@@ -24,106 +25,154 @@
     <div class="dashboard-shell">
         <button class="sidebar-overlay" id="sidebarOverlay" type="button" aria-label="Sluit menu"></button>
         <aside class="app-sidebar" id="appSidebar">
-            <a class="sidebar-brand" href="/">Life<span>Buddy</span><small>COMMAND CENTER</small></a>
-            <section class="sidebar-profile">
-                <div class="avatar avatar-large" id="userAvatar">L</div>
-                <div class="profile-copy"><strong id="userName">Laden…</strong><span id="userEmail">jij@lifebuddy.nl</span><span class="plan-badge" id="planBadge">Free</span></div>
-            </section>
-            <section class="level-widget" aria-label="Jouw level en ervaring">
-                <div class="level-widget-top"><span id="levelDisplay">Level 1</span><span id="xpText">0 / 100 XP</span></div>
-                <div class="xp-bar-container"><div class="xp-bar-fill" id="xpBar"></div></div>
-                <span class="class-badge" id="classBadge">🧙 Wizard</span>
-            </section>
+            <a class="sidebar-brand" href="/">Life<span>Buddy</span></a>
             <nav class="sidebar-nav" aria-label="Dashboard navigatie">
+                <span class="sidebar-section-label">Werkruimte</span>
                 <button class="sidebar-nav-item active" type="button" data-page="overview"><i class="fa-solid fa-house"></i><span>Overzicht</span></button>
-                <button class="sidebar-nav-item" type="button" data-page="tasks"><i class="fa-solid fa-list-check"></i><span>Taken</span><em>+10 XP</em></button>
-                <button class="sidebar-nav-item" type="button" data-page="subjects"><i class="fa-solid fa-graduation-cap"></i><span>Vakken</span><em>+5 XP</em></button>
+                <button class="sidebar-nav-item" type="button" data-page="tasks"><i class="fa-solid fa-list-check"></i><span>Taken</span></button>
+                <button class="sidebar-nav-item" type="button" data-page="subjects"><i class="fa-solid fa-graduation-cap"></i><span>Cijfers</span></button>
+                <button class="sidebar-nav-item" type="button" data-page="tests"><i class="fa-solid fa-calendar-check"></i><span>Toetsen</span></button>
                 <a class="sidebar-nav-item study-room-nav" href="/studieruimte"><i class="fa-solid fa-book-open"></i><span>Studieruimte</span></a>
-                <button class="sidebar-nav-item" type="button" data-page="music"><i class="fa-solid fa-headphones"></i><span>Focus music</span></button>
-                <button class="sidebar-nav-item" type="button" data-page="achievements"><i class="fa-solid fa-trophy"></i><span>Achievements</span><em id="achievementCount">0</em></button>
-                <button class="sidebar-nav-item" type="button" data-page="class"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Jouw class</span></button>
+                <button class="sidebar-nav-item" type="button" data-page="music"><i class="fa-solid fa-headphones"></i><span>Focus</span></button>
+                <span class="sidebar-section-label">Vakken</span>
+                <div id="sidebarSubjects" class="sidebar-subjects" style="display:grid;gap:1px"><p class="sidebar-subjects-empty">Nog geen vakken.</p></div>
+                <span class="sidebar-section-label sidebar-section-label-secondary">Persoonlijk</span>
+                <button class="sidebar-nav-item sidebar-nav-secondary" type="button" data-page="achievements"><i class="fa-solid fa-award"></i><span>Mijlpalen</span></button>
             </nav>
-            <div class="language-switch sidebar-language-switch" aria-label="Taal kiezen"><button type="button" data-language="nl" aria-pressed="true">NL</button><button type="button" data-language="en" aria-pressed="false">EN</button></div>
-            <button class="logout-button" id="logoutBtn" type="button"><i class="fa-solid fa-arrow-right-from-bracket"></i> Uitloggen</button>
+            <div class="sidebar-foot">
+                <div class="language-switch sidebar-language-switch" aria-label="Taal kiezen"><button type="button" data-language="nl" aria-pressed="true">NL</button><button type="button" data-language="en" aria-pressed="false">EN</button></div>
+                <section class="sidebar-profile">
+                    <div class="avatar avatar-large" id="userAvatar">L</div>
+                    <div class="profile-copy"><strong id="userName">Laden…</strong><span id="userEmail">jij@lifebuddy.nl</span><span class="plan-badge" id="planBadge">Persoonlijk account</span></div>
+                </section>
+                <button class="logout-button" id="logoutBtn" type="button"><i class="fa-solid fa-arrow-right-from-bracket"></i> Uitloggen</button>
+            </div>
         </aside>
 
         <main class="dashboard-main">
             <section class="dashboard-page active" id="page-overview">
-                <div class="dashboard-heading">
-                    <div><p class="eyebrow" id="todayLabel">JOUW DAGELIJKSE OVERZICHT</p><h1>Goed bezig, <span id="greetingName">vriend</span>.</h1><p>Een kleine stap vandaag is een groot verschil morgen.</p></div>
-                    <button class="heading-action" id="openTasks" type="button"><i class="fa-solid fa-plus"></i> Nieuwe taak</button>
-                </div>
+                <header class="ov-head">
+                    <p class="ov-date" id="todayLabel"></p>
+                    <h1>Goed je te zien, <span id="greetingName">vriend</span>.</h1>
+                    <p class="lead" id="wsLead">Een heldere plek voor wat vandaag belangrijk is.</p>
+                </header>
 
-                <div class="overview-hero-grid">
-                    <article class="streak-card streak-card-premium">
-                        <div class="streak-card-copy"><span class="streak-kicker"><i class="fa-solid fa-fire"></i> STUDY STREAK</span><div class="streak-number-row"><strong id="streakCount">0</strong><span>dagen</span></div><p id="streakMessage">Begin vandaag je eigen ritme.</p></div>
-                        <div class="streak-flame" aria-hidden="true">🔥</div><div class="streak-spark streak-spark-one"></div><div class="streak-spark streak-spark-two"></div>
-                    </article>
-                    <article class="intention-card">
-                        <div class="intention-icon"><i class="fa-solid fa-heart"></i></div>
-                        <div><span class="card-kicker">DAILY INTENTION</span><blockquote>“Mijn hoofd is rustig, mijn hart staat open en ik kan alles stap voor stap.”</blockquote></div>
-                        <span class="focus-chip"><i class="fa-solid fa-bullseye"></i> Focusmodus</span>
-                    </article>
-                </div>
+                <div class="period-line-slot" id="periodLine"></div>
 
-                <section class="dash-stat-grid" aria-label="Jouw statistieken">
-                    <article class="dash-stat-card violet"><div class="stat-icon-wrap"><i class="fa-solid fa-list-check"></i></div><div><strong id="statTasks">0</strong><span>Open taken</span></div><i class="fa-solid fa-arrow-trend-up stat-trend"></i></article>
-                    <article class="dash-stat-card blue"><div class="stat-icon-wrap"><i class="fa-solid fa-book-open"></i></div><div><strong id="statSubjects">0</strong><span>Vakken</span></div><i class="fa-solid fa-arrow-trend-up stat-trend"></i></article>
-                    <article class="dash-stat-card amber"><div class="stat-icon-wrap"><i class="fa-solid fa-comment-dots"></i></div><div><strong id="statChats">0</strong><span>Coach chats</span></div><i class="fa-solid fa-arrow-trend-up stat-trend"></i></article>
-                    <article class="dash-stat-card coral"><div class="stat-icon-wrap"><i class="fa-solid fa-fire"></i></div><div><strong id="statStreak">0</strong><span>Dagelijkse streak</span></div><i class="fa-solid fa-bolt stat-trend"></i></article>
-                </section>
+                <div class="ws-cols">
+                    <div class="ws-main">
+                        <section class="ws-section" aria-labelledby="wsTestsTitle">
+                            <div class="ws-section-head"><h2 id="wsTestsTitle">Toetsen <span class="count" id="overviewTestCount">0</span></h2><button class="ws-link" type="button" data-goto-page="tests">Beheren</button></div>
+                            <ul class="ws-tasks" id="overviewTests"></ul>
+                        </section>
+                        <section class="ws-section" aria-labelledby="wsTodayTitle">
+                            <div class="ws-section-head"><h2 id="wsTodayTitle">Vandaag <span class="count" id="todayCount">0</span></h2><button class="ws-link" id="openTasks" type="button">+ Nieuwe taak</button></div>
+                            <ul class="ws-tasks" id="todayTasks"></ul>
+                        </section>
+                        <section class="ws-section" id="laterSection" aria-labelledby="wsLaterTitle">
+                            <div class="ws-section-head"><h2 id="wsLaterTitle">Later <span class="count" id="laterCount">0</span></h2><button class="ws-link" id="viewAllTasks" type="button">Alle taken</button></div>
+                            <ul class="ws-tasks" id="recentTasks"></ul>
+                        </section>
+                    </div>
 
-                <div class="overview-content-grid">
-                    <section class="content-card analytics-card">
-                        <div class="card-title-row"><div><span class="card-kicker">JOUW VOORTGANG</span><h2>Analytics</h2></div><div class="analytics-tabs" role="tablist" aria-label="Analytics periode"><button class="active" type="button" data-range="week">Week</button><button type="button" data-range="month">Maand</button><button type="button" data-range="year">Jaar</button></div></div>
-                        <div class="analytics-summary"><div><strong id="analyticsPrimary">0%</strong><span id="analyticsLabel">Taakvoltooiing</span></div><p id="analyticsDescription">Voeg je eerste taak toe om je voortgang te zien.</p></div>
-                        <div class="progress-list">
-                            <div class="progress-row"><div class="progress-row-label"><span><i class="fa-solid fa-circle-check"></i> Taken voltooid</span><strong id="taskProgressText">0%</strong></div><div class="progress-track"><span class="progress-fill violet-fill" id="taskProgress"></span></div></div>
-                            <div class="progress-row"><div class="progress-row-label"><span><i class="fa-solid fa-star"></i> Cijfergemiddelde</span><strong id="gradeProgressText">—</strong></div><div class="progress-track"><span class="progress-fill blue-fill" id="gradeProgress"></span></div></div>
-                            <div class="progress-row"><div class="progress-row-label"><span><i class="fa-solid fa-wand-magic-sparkles"></i> Coach-momenten</span><strong id="chatProgressText">0</strong></div><div class="progress-track"><span class="progress-fill amber-fill" id="chatProgress"></span></div></div>
-                        </div>
-                    </section>
-                    <section class="content-card recent-card"><div class="card-title-row"><div><span class="card-kicker">VANDAAG</span><h2>Komende taken</h2></div><button class="text-action" id="viewAllTasks" type="button">Alles bekijken <i class="fa-solid fa-arrow-right"></i></button></div><ul class="modern-list" id="recentTasks"><li class="empty-state"><i class="fa-regular fa-calendar"></i><span>Je planning is helemaal vrij.</span></li></ul></section>
+                    <aside class="ws-rail" aria-label="Vakken, voortgang en vrienden">
+                        <section class="ws-section" aria-labelledby="wsSubjectsTitle">
+                            <div class="ws-section-head"><h2 id="wsSubjectsTitle">Vakken <span class="count" id="subjectCount">0</span></h2><button class="ws-link" type="button" data-goto-page="subjects">Cijfers</button></div>
+                            <ul class="ws-list" id="overviewSubjects"></ul>
+                            <p class="ws-note" id="overviewNote"></p>
+                        </section>
+
+                        <section class="ws-section" aria-labelledby="wsProgressTitle">
+                            <div class="ws-section-head"><h2 id="wsProgressTitle">Voortgang</h2></div>
+                            <dl class="ws-metrics">
+                                <div class="ws-metric"><dt>Ritme</dt><dd><span id="streakCount">0</span> <span id="streakUnit">dagen</span> op rij</dd><p class="ws-sub" id="streakMessage">Begin vandaag je eigen ritme.</p></div>
+                                <div class="ws-metric"><dt>Taken voltooid</dt><dd id="taskProgressText">0%</dd><div class="ws-bar" aria-hidden="true"><span id="taskProgress"></span></div><p class="ws-sub" id="analyticsDescription">Voeg je eerste taak toe om je voortgang te zien.</p></div>
+                                <div class="ws-metric"><dt>Gesprekken met Buddy</dt><dd id="chatProgressText">0</dd></div>
+                            </dl>
+                        </section>
+
+                        <section class="ws-section" aria-labelledby="wsFriendsTitle">
+                            <div class="ws-section-head"><h2 id="wsFriendsTitle">Vrienden <span class="count" id="friendCount">0</span></h2><button class="ws-link" id="toggleFriendInvite" type="button" aria-expanded="false" aria-controls="friendInviteForm">Toevoegen</button></div>
+                            <form class="friend-invite-form" id="friendInviteForm" hidden>
+                                <label for="friendEmail">E-mailadres van je vriend</label>
+                                <div><input id="friendEmail" type="email" placeholder="vriend@email.nl" autocomplete="email" required><button type="submit" aria-label="Stuur uitnodiging"><i class="fa-solid fa-arrow-right"></i></button></div>
+                            </form>
+                            <p class="friend-status" id="friendStatus" role="status"></p>
+                            <div class="friend-requests" id="friendRequests"></div>
+                            <div class="friends-list" id="friendsList"><p class="friends-empty">Nog geen vrienden toegevoegd.</p></div>
+                        </section>
+                    </aside>
                 </div>
-                <section class="content-card achievement-preview-card"><div class="card-title-row"><div><span class="card-kicker">JE COLLECTIE</span><h2>Bijna ontgrendeld</h2></div><button class="text-action" id="viewAchievements" type="button">Bekijk alles <i class="fa-solid fa-arrow-right"></i></button></div><div class="achievement-preview-grid" id="overviewAchievements"></div></section>
             </section>
 
-            <section class="dashboard-page" id="page-tasks"><div class="page-heading"><div><p class="eyebrow">PLANNING</p><h1>Jouw taken</h1><p>Maak ruimte in je hoofd door alles op één plek te plannen.</p></div><span class="page-xp"><i class="fa-solid fa-bolt"></i> +10 XP bij voltooiing</span></div><form class="add-form modern-form" id="taskForm"><input type="text" id="taskTitle" placeholder="Wat wil je vandaag afronden?" required><input type="text" id="taskDesc" placeholder="Details (optioneel)"><input type="date" id="taskDue" aria-label="Deadline"><button class="form-submit" type="submit"><i class="fa-solid fa-plus"></i><span>Toevoegen</span></button></form><ul class="modern-list full-list" id="taskList"><li class="empty-state"><i class="fa-solid fa-list-check"></i><span>Nog geen taken. Wat is je eerste kleine stap?</span></li></ul></section>
+            <section class="dashboard-page" id="page-tasks" hidden><div class="page-heading"><div><h1>Jouw taken</h1><p>Maak ruimte in je hoofd door alles op één plek te plannen.</p></div></div><form class="add-form modern-form" id="taskForm"><input type="text" id="taskTitle" placeholder="Wat wil je vandaag afronden?" required><input type="text" id="taskDesc" placeholder="Details (optioneel)"><input type="date" id="taskDue" aria-label="Deadline"><select id="taskSubject" aria-label="Vak (optioneel)"><option value="">Geen vak</option></select><select id="taskTest" aria-label="Toets (optioneel)"><option value="">Geen toets</option></select><button class="form-submit" type="submit"><i class="fa-solid fa-plus"></i><span>Toevoegen</span></button></form><ul class="modern-list full-list" id="taskList"><li class="empty-state"><i class="fa-solid fa-list-check"></i><span>Nog geen taken. Wat is je eerste kleine stap?</span></li></ul></section>
 
-            <section class="dashboard-page" id="page-subjects">
-                <div class="page-heading"><div><p class="eyebrow">STUDIE</p><h1>Jouw vakken</h1><p>Houd je cijfers en je groei inzichtelijk.</p></div><span class="page-xp"><i class="fa-solid fa-bolt"></i> +5 XP per vak</span></div>
-                <form class="add-form modern-form subject-form" id="subjectForm"><input type="text" id="subjectName" placeholder="Vaknaam" required><input type="text" id="subjectGradeLabel" placeholder="Kolom, bv. Periode 1"><input type="number" id="subjectGrade" placeholder="Cijfer (0–10)" min="0" max="10" step="0.1"><button class="form-submit" type="submit"><i class="fa-solid fa-plus"></i><span>Toevoegen</span></button></form>
-                <section class="csv-import-card" aria-labelledby="csvImportTitle">
-                    <div class="csv-import-icon"><i class="fa-solid fa-file-csv"></i></div>
-                    <div class="csv-import-copy"><span class="card-kicker">CIJFERLIJST IMPORTEREN</span><h2 id="csvImportTitle">Upload je CSV-bestand</h2><p>Gebruik kolommen zoals <strong>Vak; Periode 1; Periode 2</strong>. Elke cijferkolom blijft zichtbaar in je tabel; het gemiddelde wordt automatisch berekend.</p></div>
-                    <label class="csv-file-button" for="csvFileInput"><i class="fa-solid fa-arrow-up-from-bracket"></i><span>Bestand kiezen</span><input id="csvFileInput" type="file" accept=".csv,text/csv" hidden></label>
+            <section class="dashboard-page" id="page-subjects" hidden>
+                <div class="page-heading">
+                    <div><h1>Cijfers</h1><p class="gb-lead" id="gbLead" aria-live="polite"></p></div>
+                    <div class="gb-actions">
+                        <button class="btn-ghost" id="gbImportToggle" type="button" aria-expanded="false" aria-controls="gbImportPanel">Importeren</button>
+                        <button class="btn-ghost strong" id="gbAddToggle" type="button" aria-expanded="false" aria-controls="subjectForm">Cijfer toevoegen</button>
+                    </div>
+                </div>
+                <form class="gb-form" id="subjectForm" novalidate hidden>
+                        <label>Vak<input type="text" id="subjectName" list="gbSubjectOptions" maxlength="80" required autocomplete="off"></label>
+                        <label>Toets<input type="text" id="subjectGradeLabel" maxlength="60" placeholder="Bijv. Hoofdstuk 3 toets" autocomplete="off"></label>
+                        <label>Cijfer<input type="text" id="subjectGrade" inputmode="decimal" autocomplete="off" placeholder="0–10" required></label>
+                        <label>Weging<input type="text" id="subjectWeight" inputmode="decimal" autocomplete="off" value="1"></label>
+                        <label>Periode<input type="text" id="subjectPeriod" list="gbPeriodOptions" maxlength="40" placeholder="V4" autocomplete="off"></label>
+                        <label>Datum<input type="date" id="subjectDate"></label>
+                        <datalist id="gbSubjectOptions"></datalist><datalist id="gbPeriodOptions"></datalist>
+                        <div class="gb-form-foot"><p class="gb-form-error" id="gbFormError" role="alert"></p><p class="gb-form-hint">Een toets met dezelfde naam in dezelfde periode wordt bijgewerkt.</p><button class="gb-primary" type="submit">Opslaan</button></div>
+                    </form>
+                <section class="csv-import-card gb-import" id="gbImportPanel" aria-labelledby="csvImportTitle" hidden>
+                    <div class="csv-import-icon"><i class="fa-solid fa-file-import"></i></div>
+                    <div class="csv-import-copy"><span class="card-kicker">CIJFERLIJST IMPORTEREN</span><h2 id="csvImportTitle">Importeer je cijferback-up</h2><p>Gebruik een <strong>.stgrades</strong>-back-up van Somtoday of een CSV-bestand. Een CSV met de kolommen <strong>Vak, Toets, Datum, Cijfer, Weging, Periode</strong> neemt ook datum en weging over. <button class="gb-link" id="gbTemplateDownload" type="button">Voorbeeldbestand downloaden</button></p></div>
+                    <label class="csv-file-button" for="csvFileInput"><i class="fa-solid fa-arrow-up-from-bracket"></i><span>Bestand kiezen</span><input id="csvFileInput" type="file" accept=".stgrades,application/json,.csv,text/csv" hidden></label>
                     <div class="csv-import-status" id="csvImportStatus" role="status">Nog geen bestand gekozen.</div>
                     <div class="csv-preview" id="csvPreview" hidden></div>
                     <div class="csv-import-actions" id="csvImportActions" hidden><button class="secondary-action" id="clearCsvImport" type="button">Annuleren</button><button class="primary-button" id="confirmCsvImport" type="button"><i class="fa-solid fa-file-import"></i> Importeer cijfers</button></div>
                 </section>
-                <section class="subject-table" aria-label="Overzicht van vakken en cijfers"><div class="subject-table-scroll"><table class="subject-grade-table"><thead id="subjectTableHeader"><tr><th>Vak</th><th>Gemiddelde</th><th aria-label="Acties"></th></tr></thead><tbody id="subjectList"><tr><td class="empty-state" colspan="3"><i class="fa-solid fa-book-open"></i><span>Nog geen vakken. Voeg je eerste vak toe.</span></td></tr></tbody></table></div></section>
+                <div class="grade-period-tabs" id="gradePeriodTabs" role="group" aria-label="Kies een periode"></div>
+                <div class="gb-scroll"><table class="gb-table" id="gbTable"><thead id="subjectTableHeader"></thead><tbody id="subjectList"></tbody></table></div>
+                <div id="gbLogSection" hidden>
+                    <h2 class="gb-log-title">Laatste cijfers</h2>
+                    <div class="gb-scroll"><table class="gb-log-table"><thead><tr><th>Datum</th><th>Vak</th><th>Toets</th><th class="gb-hide-sm">Periode</th><th class="gb-num gb-hide-sm">Weging</th><th class="gb-num">Cijfer</th><th><span class="gb-sr" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Acties</span></th></tr></thead><tbody id="gbLog"></tbody></table></div>
+                </div>
             </section>
 
-            <section class="dashboard-page" id="page-music"><div class="page-heading"><div><p class="eyebrow">FOCUS</p><h1>Jouw muziek</h1><p>Importeer je eigen MP3's en bouw een playlist voor je volgende focussessie.</p></div></div><div id="musicContent" class="premium-lock music-launch-card"><div class="premium-icon"><i class="fa-solid fa-headphones"></i></div><span class="card-kicker">JOUW LOKALE PLAYLIST</span><h2>Focus met jouw eigen muziek.</h2><p>Je MP3-bestanden blijven lokaal opgeslagen in deze browser en worden niet naar een server geüpload.</p><a class="primary-button" href="/music"><i class="fa-solid fa-music"></i> Open muziekspeler</a></div></section>
+            <section class="dashboard-page" id="page-tests" hidden>
+                <div class="page-heading"><div><h1>Toetsen</h1><p class="gb-lead" id="testsLead"></p></div></div>
+                <section class="ws-section" aria-labelledby="testsTitle">
+                    <div class="ws-section-head"><h2 id="testsTitle">Toetsen <span class="count" id="testsCount">0</span></h2></div>
+                    <form class="inline-form" id="testForm" novalidate>
+                        <select id="testSubject" aria-label="Vak" required></select>
+                        <input id="testTitle" type="text" maxlength="120" placeholder="Bijv. Hoofdstuk 7 toets" aria-label="Titel van de toets" autocomplete="off" required>
+                        <input id="testDate" type="date" aria-label="Datum van de toets" required>
+                        <button class="gb-primary" id="testSubmit" type="submit">Toevoegen</button>
+                        <button class="btn-ghost" id="testCancel" type="button" hidden>Annuleer</button>
+                        <p class="gb-form-error" id="testError" role="alert"></p>
+                    </form>
+                    <ul class="ws-tasks" id="testList"></ul>
+                </section>
+                <section class="ws-section" aria-labelledby="periodsTitle">
+                    <div class="ws-section-head"><h2 id="periodsTitle">Perioden <span class="count" id="periodsCount">0</span></h2></div>
+                    <form class="inline-form period-form" id="periodForm" novalidate>
+                        <input id="periodName" type="text" maxlength="40" placeholder="Bijv. V4" aria-label="Naam van de periode" autocomplete="off" required>
+                        <input id="periodStart" type="date" aria-label="Begin van de periode" required>
+                        <input id="periodEnd" type="date" aria-label="Einde van de periode" required>
+                        <button class="gb-primary" id="periodSubmit" type="submit">Toevoegen</button>
+                        <button class="btn-ghost" id="periodCancel" type="button" hidden>Annuleer</button>
+                        <p class="gb-form-error" id="periodError" role="alert"></p>
+                    </form>
+                    <ul class="ws-tasks" id="periodList"></ul>
+                </section>
+            </section>
 
-            <section class="dashboard-page" id="page-achievements"><div class="page-heading"><div><p class="eyebrow">GAMIFICATION</p><h1>Achievements</h1><p>Elke stap telt. Verzamel badges voor de gewoontes die je opbouwt.</p></div><span class="page-xp"><i class="fa-solid fa-trophy"></i> <span id="achievementHeadingCount">0</span> ontgrendeld</span></div><div id="achievementList" class="achievement-grid"></div></section>
+            <section class="dashboard-page" id="page-music" hidden><div class="page-heading"><div><h1>Jouw muziek</h1><p>Importeer je eigen MP3's en bouw een playlist voor je volgende focussessie.</p></div></div><div id="musicContent" class="premium-lock music-launch-card"><div class="premium-icon"><i class="fa-solid fa-headphones"></i></div><span class="card-kicker">JOUW LOKALE PLAYLIST</span><h2>Focus met jouw eigen muziek.</h2><p>Je MP3-bestanden blijven lokaal opgeslagen in deze browser en worden niet naar een server geüpload.</p><a class="primary-button" href="/music"><i class="fa-solid fa-music"></i> Open muziekspeler</a></div></section>
 
-            <section class="dashboard-page" id="page-class"><div class="page-heading"><div><p class="eyebrow">JOUW SPEELSTIJL</p><h1>Kies je class</h1><p>Je class geeft je een bonus die past bij jouw manier van studeren.</p></div></div><div class="class-grid"><button class="class-card warrior" type="button" data-class="warrior"><span class="class-icon">🗡️</span><strong>Warrior</strong><span>+5 XP per taak</span></button><button class="class-card wizard" type="button" data-class="wizard"><span class="class-icon">🧙</span><strong>Wizard</strong><span>+3 XP per vak</span></button><button class="class-card archer" type="button" data-class="archer"><span class="class-icon">🏹</span><strong>Archer</strong><span>+2 XP per chat</span></button><button class="class-card guardian" type="button" data-class="guardian"><span class="class-icon">🛡️</span><strong>Guardian</strong><span>+10 XP per actieve dag</span></button></div><div class="class-tip"><i class="fa-solid fa-lightbulb"></i><p>Je mag altijd wisselen. Kies een bonus die je helpt bij het doel dat nu het belangrijkst is.</p></div></section>
+            <section class="dashboard-page" id="page-achievements" hidden><div class="page-heading"><div><h1>Jouw mijlpalen</h1><p>Een rustig overzicht van de gewoontes die je onderweg hebt opgebouwd.</p></div></div><div id="achievementList" class="achievement-grid"></div></section>
         </main>
-        <aside class="friends-rail" aria-label="Vrienden">
-            <section class="friends-card">
-                <div class="friends-card-heading"><div><span class="card-kicker">JE CIRKEL</span><h2>Vrienden</h2></div><span class="friend-count" id="friendCount">0</span></div>
-                <p class="friends-intro">Nodig studievrienden uit en bekijk hun voortgang.</p>
-                <button class="friend-invite-toggle" id="toggleFriendInvite" type="button"><i class="fa-solid fa-user-plus"></i> Vriend toevoegen</button>
-                <form class="friend-invite-form" id="friendInviteForm" hidden>
-                    <label for="friendEmail">E-mailadres van je vriend</label>
-                    <div><input id="friendEmail" type="email" placeholder="vriend@email.nl" autocomplete="email" required><button type="submit" aria-label="Stuur uitnodiging"><i class="fa-solid fa-arrow-right"></i></button></div>
-                </form>
-                <p class="friend-status" id="friendStatus" role="status"></p>
-                <div class="friend-requests" id="friendRequests"></div>
-                <div class="friends-list" id="friendsList"><p class="friends-empty"><i class="fa-solid fa-users"></i><span>Nog geen vrienden toegevoegd.</span></p></div>
-            </section>
-        </aside>
     </div>
 
     <div class="friend-profile-modal" id="friendProfileModal" hidden>
@@ -134,30 +183,28 @@
         </section>
     </div>
 
-    <div class="buddy-widget" id="buddyWidget">
-        <section class="buddy-panel" id="buddyPanel" hidden aria-label="LifeBuddy Coach">
-            <header class="buddy-panel-header"><div><span class="card-kicker">JOUW STUDIEMAATJE</span><h2><span id="buddyPanelName">Buddy</span> is er voor je</h2></div><div class="buddy-header-actions"><button class="buddy-header-button" id="toggleBuddyCustomizer" type="button" aria-label="Personaliseer je huisdier"><i class="fa-solid fa-wand-magic-sparkles"></i></button><button class="buddy-header-button" id="closeBuddyPanel" type="button" aria-label="Sluit chat"><i class="fa-solid fa-minus"></i></button></div></header>
-            <section class="buddy-customizer" id="buddyCustomizer" hidden aria-label="Personaliseer je LifeBuddy">
-                <label for="buddyName">Naam van je maatje</label><input id="buddyName" type="text" maxlength="18" placeholder="Buddy">
-                <span>Kleur</span><div class="buddy-choice-row" data-buddy-choice="color"><button type="button" data-buddy-color="violet" aria-label="Paarse kleur"></button><button type="button" data-buddy-color="aqua" aria-label="Blauwe kleur"></button><button type="button" data-buddy-color="rose" aria-label="Roze kleur"></button><button type="button" data-buddy-color="gold" aria-label="Gouden kleur"></button></div>
-                <span>Accessoire</span><div class="buddy-accessory-row"><button type="button" data-buddy-accessory="star">✨ Ster</button><button type="button" data-buddy-accessory="book">📚 Boeken</button><button type="button" data-buddy-accessory="leaf">🌿 Rustig</button><button type="button" data-buddy-accessory="crown">👑 Kroon</button></div>
-            </section>
-            <div class="buddy-coach-prompt"><i class="fa-solid fa-sparkles"></i><p>Vraag om hulp met plannen, leren of gewoon wat motivatie.</p></div>
-            <div class="chat-box buddy-chat-box" id="chatBox"></div>
-            <form class="chat-input buddy-chat-input" id="chatForm"><input type="text" id="chatInput" placeholder="Typ je bericht…" required autocomplete="off"><button type="submit" aria-label="Verstuur bericht"><i class="fa-solid fa-arrow-up"></i></button></form>
-        </section>
-        <div class="buddy-dock"><button class="buddy-hide-button" id="hideBuddy" type="button" aria-label="Verberg je LifeBuddy"><i class="fa-solid fa-xmark"></i></button><button class="buddy-launcher buddy-violet" id="buddyLauncher" type="button" aria-expanded="false" aria-controls="buddyPanel"><span class="buddy-speech" id="buddySpeech">Hoi, ik ben Buddy!</span><span class="buddy-accessory" id="buddyAccessory" aria-hidden="true">✨</span><span class="buddy-ear buddy-ear-left"></span><span class="buddy-ear buddy-ear-right"></span><span class="buddy-face"><i></i><i></i><b></b></span><span class="buddy-label" id="buddyLabel">Buddy</span></button></div>
-    </div>
-    <button class="buddy-restore" id="restoreBuddy" type="button" hidden aria-label="Toon je LifeBuddy"><i class="fa-solid fa-sparkles"></i></button>
 
     <script>
         const authToken = localStorage.getItem('token');
         if (!authToken) window.location.replace('/');
-        let currentUser = null, tasks = [], subjects = [], chatHistory = [], dashboardStats = null, friends = [], incomingRequests = [], outgoingRequests = [];
+        let currentUser = null, tasks = [], subjects = [], dashboardStats = null, friends = [], incomingRequests = [], outgoingRequests = [], activeGradePeriod = 'all';
         const $ = (selector) => document.querySelector(selector);
         const t = (text) => window.LifeBuddyI18n?.t(text) || text;
         const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
         const formatDate = (date) => new Intl.DateTimeFormat(window.LifeBuddyI18n?.getLanguage() === 'en' ? 'en-GB' : 'nl-NL', { day: 'numeric', month: 'short' }).format(new Date(date));
+        function showDashboardToast(message, type = 'info') {
+            const container = $('#notificationContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `dashboard-toast ${type}`;
+            toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+            toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i><span>${escapeHtml(message)}</span>`;
+            container.appendChild(toast);
+            window.setTimeout(() => {
+                toast.classList.add('leaving');
+                window.setTimeout(() => toast.remove(), 220);
+            }, 3600);
+        }
 
         async function apiFetch(endpoint, options = {}) {
             const token = localStorage.getItem('token');
@@ -175,78 +222,279 @@
             }
         }
         function setProgress(id, value) { const element = document.getElementById(id); if (element) element.style.width = `${Math.max(0, Math.min(100, value))}%`; }
-        function streakCopy(streak) { if (streak >= 7) return t('Een indrukwekkend ritme. Blijf zo doorgaan!'); if (streak >= 3) return t('Je momentum groeit. Houd deze flow vast!'); if (streak === 1) return t('De eerste stap is gezet. Tot morgen!'); return t('Begin vandaag je eigen ritme.'); }
-        function updateStreak(streak = 0) { window.remoteStreak = streak; $('#streakCount').textContent = streak; $('#statStreak').textContent = streak; $('#streakMessage').textContent = streakCopy(streak); window.Game?.syncStreak(streak); }
+        function streakCopy(streak) { if (streak >= 7) return t('Een indrukwekkend ritme. Blijf zo doorgaan!'); if (streak >= 3) return t('Je momentum groeit. Houd deze flow vast!'); if (streak === 2) return t('Twee dagen op rij. Mooi begin!'); if (streak === 1) return t('De eerste stap is gezet. Tot morgen!'); return t('Begin vandaag je eigen ritme.'); }
+        function updateStreak(streak = 0) { window.remoteStreak = streak; $('#streakCount').textContent = streak; $('#streakUnit').textContent = streak === 1 ? t('dag') : t('dagen'); $('#streakMessage').textContent = streakCopy(streak); window.Game?.syncStreak(streak); }
         function updateAnalytics(stats) {
             const completed = Number(stats.completedTasks) || 0, total = Number(stats.totalTasks) || 0, taskProgress = total ? Math.round((completed / total) * 100) : 0, grade = stats.averageGrade === null || stats.averageGrade === undefined ? null : Number(stats.averageGrade), chats = Number(stats.chats) || 0;
-            $('#analyticsPrimary').textContent = `${taskProgress}%`; $('#analyticsLabel').textContent = total ? t('Taakvoltooiing') : t('Klaar om te starten'); $('#analyticsDescription').textContent = total ? `${completed} / ${total} ${t('Taken voltooid').toLowerCase()}.` : t('Voeg je eerste taak toe om je voortgang te zien.'); $('#taskProgressText').textContent = `${taskProgress}%`; $('#gradeProgressText').textContent = grade === null ? '—' : grade.toFixed(1); $('#chatProgressText').textContent = chats;
-            setProgress('taskProgress', taskProgress); setProgress('gradeProgress', grade === null ? 0 : Math.round(grade * 10)); setProgress('chatProgress', Math.min(chats * 10, 100));
+            $('#analyticsDescription').textContent = total ? `${completed} / ${total} ${t('Taken voltooid').toLowerCase()}.` : t('Voeg je eerste taak toe om je voortgang te zien.'); $('#taskProgressText').textContent = `${taskProgress}%`; $('#chatProgressText').textContent = chats;
+            setProgress('taskProgress', taskProgress);
         }
         function renderTasks() {
             const list = $('#taskList'); if (!tasks.length) { list.innerHTML = '<li class="empty-state"><i class="fa-solid fa-list-check"></i><span>Nog geen taken. Wat is je eerste kleine stap?</span></li>'; return; }
-            list.innerHTML = tasks.map((task) => `<li class="modern-list-item ${task.status === 'completed' ? 'is-complete' : ''}"><button class="complete-button" type="button" data-complete-task="${escapeHtml(task.id)}" aria-label="Markeer ${escapeHtml(task.title)} als voltooid"><i class="fa-solid fa-check"></i></button><div class="list-item-content"><strong>${escapeHtml(task.title)}</strong>${task.description ? `<span>${escapeHtml(task.description)}</span>` : ''}${task.due_date ? `<small><i class="fa-regular fa-calendar"></i> ${formatDate(task.due_date)}</small>` : ''}</div><span class="status-pill ${task.status === 'completed' ? 'complete' : ''}">${task.status === 'completed' ? 'Klaar' : 'Open'}</span><button class="delete-button" type="button" data-delete-task="${escapeHtml(task.id)}" aria-label="Verwijder ${escapeHtml(task.title)}"><i class="fa-solid fa-trash-can"></i></button></li>`).join('');
+            list.innerHTML = tasks.map((task) => { const subject = subjectById(task.subject_id); const linkedTest = tests.find((item) => item.id === task.test_id); const meta = [subject ? subject.name : '', task.due_date ? formatDate(task.due_date) : '', linkedTest ? `voor ${linkedTest.title}` : ''].filter(Boolean).join(' · '); return `<li class="modern-list-item ${task.status === 'completed' ? 'is-complete' : ''}"${colorStyle(subject)}><button class="complete-button" type="button" data-complete-task="${escapeHtml(task.id)}" aria-label="Markeer ${escapeHtml(task.title)} als voltooid"><i class="fa-solid fa-check"></i></button><span class="spine" aria-hidden="true"></span><div class="list-item-content"><strong>${escapeHtml(task.title)}</strong>${task.description ? `<span>${escapeHtml(task.description)}</span>` : ''}${meta ? `<small>${escapeHtml(meta)}</small>` : ''}</div><span class="status-pill ${task.status === 'completed' ? 'complete' : ''}">${task.status === 'completed' ? 'Klaar' : 'Open'}</span><button class="delete-button" type="button" data-delete-task="${escapeHtml(task.id)}" aria-label="Verwijder ${escapeHtml(task.title)}"><i class="fa-solid fa-trash-can"></i></button></li>`; }).join('');
         }
+        function dueInfo(value) {
+            if (!value) return { text: '', cls: '' };
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const days = Math.round((new Date(`${value}T00:00:00`) - today) / 86400000);
+            const english = window.LifeBuddyI18n?.getLanguage() === 'en';
+            if (days < 0) return { text: english ? 'Overdue' : 'Achterstallig', cls: 'is-overdue', days };
+            if (days === 0) return { text: english ? 'Today' : 'Vandaag', cls: 'is-today', days };
+            if (days === 1) return { text: english ? 'Tomorrow' : 'Morgen', cls: '', days };
+            if (days < 7) return { text: new Intl.DateTimeFormat(english ? 'en-GB' : 'nl-NL', { weekday: 'long' }).format(new Date(`${value}T00:00:00`)), cls: '', days };
+            return { text: formatDate(value), cls: '', days };
+        }
+        function updateLead() {
+            const lead = $('#wsLead'); if (!lead) return;
+            const open = tasks.filter((task) => task.status !== 'completed');
+            const overdue = open.filter((task) => task.due_date && dueInfo(task.due_date).days < 0).length;
+            const dueToday = open.filter((task) => task.due_date && dueInfo(task.due_date).days === 0).length;
+            const grade = dashboardStats && dashboardStats.averageGrade !== null && dashboardStats.averageGrade !== undefined ? Number(dashboardStats.averageGrade) : null;
+            const parts = [];
+            if (overdue) parts.push(`${overdue} ${t('achterstallig')}`);
+            if (dueToday) parts.push(`${dueToday} ${dueToday === 1 ? t('taak voor vandaag') : t('taken voor vandaag')}`);
+            else if (open.length) parts.push(`${open.length} ${open.length === 1 ? t('open taak') : t('open taken')}`);
+            const nextTest = upcomingTests()[0]; if (nextTest) parts.push(`${nextTest.title} ${countdownText(daysUntil(nextTest.test_date))}`);
+            if (grade !== null) parts.push(`${t('gemiddelde')} ${formatGrade(grade)}`);
+            lead.textContent = parts.length ? parts.join(' · ') : t('Een rustige start. Voeg een taak toe of open de Studieruimte.');
+        }
+        // ---------- subjects: colour, statistics, sidebar, overview ----------
+        const subjectColor = (subject) => `var(--subject-${(Number.isInteger(Number(subject?.color)) ? Number(subject.color) % 6 : 0) + 1})`;
+        const colorStyle = (subject) => (subject ? ` style="--c:${subjectColor(subject)}"` : '');
+        const subjectById = (id) => (id ? subjects.find((subject) => subject.id === id) || null : null);
+        function subjectStats(subject) {
+            const entries = subject.grades || [];
+            const avg = subjectAverage(entries);
+            const periods = [...new Set(entries.map((entry) => safeGradePeriod(entry.period)).filter((period) => period !== 'Eindcijfers'))].sort((left, right) => { const l = gradePeriodOrder.indexOf(left), r = gradePeriodOrder.indexOf(right); return (l < 0 ? 99 : l) - (r < 0 ? 99 : r) || left.localeCompare(right, 'nl', { numeric: true }); });
+            const average = (period) => (period ? weightedGradeAverage(entries.filter((entry) => safeGradePeriod(entry.period) === period)) : null);
+            const last = average(periods[periods.length - 1]), previous = average(periods[periods.length - 2]);
+            return { avg, delta: last !== null && previous !== null ? last - previous : null, state: avg === null ? 'none' : avg < 6 ? 'attention' : avg >= 7.5 ? 'strong' : 'steady' };
+        }
+        function trendHtml(delta) {
+            if (delta === null) return '';
+            if (Math.abs(delta) < 0.15) return '<span class="trend flat">→ gelijk</span>';
+            return `<span class="trend ${delta > 0 ? 'up' : 'down'}">${delta > 0 ? '↑ +' : '↓ −'}${formatGrade(Math.abs(delta))}</span>`;
+        }
+        function renderSidebarSubjects() {
+            const box = $('#sidebarSubjects');
+            box.innerHTML = subjects.length ? subjects.map((subject) => { const { avg } = subjectStats(subject); return `<button type="button" class="sidebar-nav-item sidebar-subject" data-open-subject="${escapeHtml(subject.id)}"${colorStyle(subject)}><span class="spine"></span><span class="sb-name">${escapeHtml(subject.name)}</span>${avg === null ? '' : `<span class="sb-avg">${formatGrade(avg)}</span>`}</button>`; }).join('') : '<p class="sidebar-subjects-empty">Nog geen vakken.</p>';
+        }
+        function renderOverviewSubjects() {
+            $('#subjectCount').textContent = subjects.length;
+            const list = $('#overviewSubjects'), note = $('#overviewNote');
+            if (!subjects.length) { list.innerHTML = '<li class="ws-empty"><p>Nog geen vakken.</p><button class="ws-link" type="button" data-goto-page="subjects">Cijfer toevoegen</button></li>'; note.innerHTML = ''; return; }
+            const stats = subjects.map((subject) => ({ subject, ...subjectStats(subject) }));
+            list.innerHTML = stats.map(({ subject, avg, delta }) => `<li><button class="ws-subject" type="button" data-open-subject="${escapeHtml(subject.id)}"${colorStyle(subject)}><span class="spine"></span><span class="name">${escapeHtml(subject.name)}</span>${trendHtml(delta)}<span class="gr ${avg !== null && avg < 5.5 ? 'low' : ''}">${avg === null ? '—' : formatGrade(avg)}</span></button></li>`).join('');
+            const graded = stats.filter((item) => item.avg !== null), attention = graded.filter((item) => item.state === 'attention');
+            note.innerHTML = graded.length ? `${t('Gemiddelde')} <b>${formatGrade(graded.reduce((sum, item) => sum + item.avg, 0) / graded.length)}</b>${attention.length ? ` · <span class="attn">${escapeHtml(attention.map((item) => item.subject.name).join(', '))} ${t('vraagt aandacht')}</span>` : ''}` : '';
+        }
+        function populateTaskSubjects() {
+            const select = $('#taskSubject'), current = select.value;
+            select.innerHTML = `<option value="">${t('Geen vak')}</option>${subjects.map((subject) => `<option value="${escapeHtml(subject.id)}">${escapeHtml(subject.name)}</option>`).join('')}`;
+            select.value = subjects.some((subject) => subject.id === current) ? current : '';
+        }
+        function overviewTaskRow(task) {
+            const subject = subjectById(task.subject_id), due = dueInfo(task.due_date);
+            return `<li class="ws-task"${colorStyle(subject)}><button class="ws-check" type="button" data-complete-task="${escapeHtml(task.id)}" aria-label="Voltooi ${escapeHtml(task.title)}"></button><span class="spine" aria-hidden="true"></span><span class="ws-task-title">${escapeHtml(task.title)}</span>${subject ? `<span class="ws-task-sub">${escapeHtml(subject.name)}</span>` : ''}${due.text ? `<span class="ws-task-due ${due.cls}">${escapeHtml(due.text)}</span>` : ''}</li>`;
+        }
+        // ---------- tests and periods ----------
+        let tests = [], periods = [], editingTestId = null, editingPeriodId = null;
+        const isoOf = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        const todayIso = () => isoOf(new Date());
+        const daysUntil = (iso) => { const start = new Date(); start.setHours(0, 0, 0, 0); return Math.round((new Date(`${iso}T00:00:00`) - start) / 86400000); };
+        const countdownText = (days) => days < 0 ? 'geweest' : days === 0 ? 'vandaag' : days === 1 ? 'morgen' : days === 7 ? 'volgende week' : `over ${days} dagen`;
+        const upcomingTests = () => tests.filter((test) => test.test_date >= todayIso()).sort((left, right) => left.test_date.localeCompare(right.test_date) || left.title.localeCompare(right.title, 'nl'));
+        const currentPeriod = () => periods.find((period) => period.start_date <= todayIso() && todayIso() <= period.end_date) || null;
+        const shortDate = (iso) => new Date(`${iso}T00:00:00`).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' });
+        const longDate = (iso) => new Date(`${iso}T00:00:00`).toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' });
+        async function loadTests() { const response = await apiFetch('/api/tests'); if (response?.ok) { tests = await response.json(); renderTests(); } }
+        async function loadPeriods() { const response = await apiFetch('/api/periods'); if (response?.ok) { periods = await response.json(); renderTests(); } }
+        function renderPeriodLine() {
+            const slot = $('#periodLine'), period = currentPeriod();
+            if (!periods.length) { slot.innerHTML = '<p class="pl-empty">Stel je schoolperiode in om je jaar te volgen. <button class="gb-link" type="button" data-goto-page="tests">Periode instellen</button></p>'; return; }
+            if (!period) { slot.innerHTML = '<p class="pl-empty">Er loopt nu geen periode. <button class="gb-link" type="button" data-goto-page="tests">Perioden beheren</button></p>'; return; }
+            const start = new Date(`${period.start_date}T00:00:00`), end = new Date(`${period.end_date}T00:00:00`), now = new Date(); now.setHours(0, 0, 0, 0);
+            const total = Math.max(1, end - start), position = (date) => Math.min(100, Math.max(0, ((date - start) / total) * 100));
+            const weeks = Math.max(1, Math.ceil((end - start + 86400000) / 604800000)), week = Math.min(weeks, Math.floor((now - start) / 604800000) + 1);
+            const inPeriod = tests.filter((test) => test.test_date >= period.start_date && test.test_date <= period.end_date);
+            const ticks = inPeriod.map((test) => `<u class="tick" style="left:${position(new Date(`${test.test_date}T00:00:00`)).toFixed(1)}%;--c:${subjectColor(subjectById(test.subject_id))}" title="${escapeHtml(test.title)} · ${countdownText(daysUntil(test.test_date))}"></u>`).join('');
+            const next = upcomingTests().find((test) => test.test_date <= period.end_date);
+            slot.innerHTML = `<div class="pl" role="img" aria-label="Periode ${escapeHtml(period.name)}, week ${week} van ${weeks}"><span class="pl-label">Periode ${escapeHtml(period.name)} · week ${week} van ${weeks}</span><div class="pl-track"><i class="pl-fill" style="width:${position(now).toFixed(1)}%"></i>${ticks}<b class="pl-now" style="left:${position(now).toFixed(1)}%"></b></div>${next ? `<span class="pl-next"${colorStyle(subjectById(next.subject_id))}><i class="dot"></i>${escapeHtml(next.title)} ${countdownText(daysUntil(next.test_date))}</span>` : ''}</div>`;
+        }
+        function testRow(test, { manage = false } = {}) {
+            const subject = subjectById(test.subject_id), days = daysUntil(test.test_date), past = days < 0;
+            const prep = test.prep_total ? `<span class="ws-task-sub">${test.prep_open ? `${test.prep_open} ${test.prep_open === 1 ? 'taak' : 'taken'} te doen` : 'voorbereid'}</span>` : '';
+            const actions = manage ? `<span class="row-actions"><button class="gb-delete" type="button" data-edit-test="${escapeHtml(test.id)}">Bewerk</button><button class="gb-delete" type="button" data-delete-test="${escapeHtml(test.id)}" aria-label="Verwijder ${escapeHtml(test.title)}">Verwijder</button></span>` : '';
+            return `<li class="ws-task${past ? ' is-past' : ''}"${colorStyle(subject)}><span class="spine" aria-hidden="true"></span><span class="ws-task-title">${escapeHtml(test.title)}</span>${subject ? `<span class="ws-task-sub">${escapeHtml(subject.name)}</span>` : ''}${prep}${manage && test.period ? `<span class="ws-task-sub">${escapeHtml(test.period)}</span>` : ''}<span class="ws-task-due ${days >= 0 && days <= 3 ? 'is-today' : ''}">${past ? escapeHtml(shortDate(test.test_date)) : `${escapeHtml(countdownText(days))} · ${escapeHtml(shortDate(test.test_date))}`}</span>${actions}</li>`;
+        }
+        function renderTests() {
+            const upcoming = upcomingTests(), past = tests.filter((test) => test.test_date < todayIso()).sort((left, right) => right.test_date.localeCompare(left.test_date)).slice(0, 5);
+            renderPeriodLine();
+            $('#overviewTestCount').textContent = upcoming.length;
+            $('#overviewTests').innerHTML = upcoming.length ? upcoming.slice(0, 4).map((test) => testRow(test)).join('') : '<li class="ws-empty"><p>Geen toetsen gepland.</p><button class="ws-link" type="button" data-goto-page="tests">+ Toets toevoegen</button></li>';
+            $('#testsCount').textContent = tests.length;
+            $('#testsLead').textContent = upcoming.length ? `${upcoming[0].title} is ${countdownText(daysUntil(upcoming[0].test_date))}. ${upcoming.length === 1 ? 'Dit is je enige toets.' : `Daarna nog ${upcoming.length - 1} ${upcoming.length === 2 ? 'toets' : 'toetsen'}.`}` : 'Noteer je toetsen, dan houdt LifeBuddy bij wat eraan komt.';
+            $('#testList').innerHTML = tests.length ? `${upcoming.map((test) => testRow(test, { manage: true })).join('')}${past.length ? `<li class="ws-subhead">Geweest</li>${past.map((test) => testRow(test, { manage: true })).join('')}` : ''}` : '<li class="ws-empty"><p>Nog geen toetsen. Voeg je eerste toets toe.</p></li>';
+            const select = $('#testSubject'), keep = select.value;
+            select.innerHTML = subjects.length ? subjects.map((subject) => `<option value="${escapeHtml(subject.id)}">${escapeHtml(subject.name)}</option>`).join('') : '<option value="">Eerst een vak toevoegen (Cijfers)</option>';
+            if (subjects.some((subject) => subject.id === keep)) select.value = keep;
+            $('#periodsCount').textContent = periods.length;
+            const active = currentPeriod();
+            $('#periodList').innerHTML = periods.length ? periods.map((period) => `<li class="ws-task"><span class="ws-task-title">${escapeHtml(period.name)}${active && active.id === period.id ? ' <span class="count">· huidig</span>' : ''}</span><span class="ws-task-due">${escapeHtml(shortDate(period.start_date))} – ${escapeHtml(shortDate(period.end_date))}</span><span class="row-actions"><button class="gb-delete" type="button" data-edit-period="${escapeHtml(period.id)}">Bewerk</button><button class="gb-delete" type="button" data-delete-period="${escapeHtml(period.id)}" aria-label="Verwijder ${escapeHtml(period.name)}">Verwijder</button></span></li>`).join('') : '<li class="ws-empty"><p>Nog geen periodes. Voeg bijvoorbeeld V4 toe met begin- en einddatum.</p></li>';
+            const taskTest = $('#taskTest'), chosen = taskTest.value;
+            taskTest.innerHTML = `<option value="">Geen toets</option>${upcoming.map((test) => `<option value="${escapeHtml(test.id)}">${escapeHtml(`${test.title} (${shortDate(test.test_date)})`)}</option>`).join('')}`;
+            taskTest.value = upcoming.some((test) => test.id === chosen) ? chosen : '';
+            renderRecentTasks();
+        }
+        async function saveForm({ url, method, body, errorBox, button, label }) {
+            errorBox.textContent = ''; button.disabled = true; button.textContent = 'Opslaan…';
+            try {
+                const response = await apiFetch(url, { method, body: JSON.stringify(body) });
+                if (!response) return false;
+                if (!response.ok) { errorBox.textContent = ({ 'This test already exists': 'Deze toets staat er al.', 'A period with this name already exists': 'Er is al een periode met deze naam.', 'This period overlaps with another period': 'Deze periode overlapt met een andere periode.', 'End date must not be before the start date': 'Het einde mag niet voor het begin liggen.', 'Choose one of your own subjects': 'Kies eerst een vak.' })[(await response.json()).error] || 'Controleer je invoer: naam of titel, een geldige datum en een vak.'; return false; }
+                return true;
+            } catch { errorBox.textContent = 'Opslaan is niet gelukt. Probeer het opnieuw.'; return false; }
+            finally { button.disabled = false; button.textContent = label; }
+        }
+        function resetTestForm() { const keepSubject = $('#testSubject').value; editingTestId = null; $('#testForm').reset(); if (keepSubject) $('#testSubject').value = keepSubject; $('#testSubmit').textContent = 'Toevoegen'; $('#testCancel').hidden = true; $('#testError').textContent = ''; }
+        function resetPeriodForm() { editingPeriodId = null; $('#periodForm').reset(); $('#periodSubmit').textContent = 'Toevoegen'; $('#periodCancel').hidden = true; $('#periodError').textContent = ''; }
+        $('#testForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const body = { subject_id: $('#testSubject').value, title: $('#testTitle').value, test_date: $('#testDate').value };
+            if (!body.title.trim()) { $('#testError').textContent = 'Vul een titel in.'; return $('#testTitle').focus(); }
+            if (!body.test_date) { $('#testError').textContent = 'Kies een datum.'; return $('#testDate').focus(); }
+            const label = editingTestId ? 'Opslaan' : 'Toevoegen';
+            if (await saveForm({ url: editingTestId ? `/api/tests/${editingTestId}` : '/api/tests', method: editingTestId ? 'PUT' : 'POST', body, errorBox: $('#testError'), button: $('#testSubmit'), label })) { resetTestForm(); await loadTests(); showDashboardToast(editingTestId === null ? 'Toets opgeslagen.' : 'Toets bijgewerkt.'); }
+        });
+        $('#periodForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const body = { name: $('#periodName').value, start_date: $('#periodStart').value, end_date: $('#periodEnd').value };
+            if (!body.name.trim()) { $('#periodError').textContent = 'Vul een naam in.'; return $('#periodName').focus(); }
+            if (!body.start_date || !body.end_date) { $('#periodError').textContent = 'Kies een begin- en einddatum.'; return; }
+            const label = editingPeriodId ? 'Opslaan' : 'Toevoegen';
+            if (await saveForm({ url: editingPeriodId ? `/api/periods/${editingPeriodId}` : '/api/periods', method: editingPeriodId ? 'PUT' : 'POST', body, errorBox: $('#periodError'), button: $('#periodSubmit'), label })) { resetPeriodForm(); await loadPeriods(); await loadTests(); showDashboardToast('Periode opgeslagen.'); }
+        });
+        $('#testCancel').addEventListener('click', resetTestForm);
+        $('#periodCancel').addEventListener('click', resetPeriodForm);
+        document.addEventListener('click', async (event) => {
+            const editTest = event.target.closest('[data-edit-test]'), editPeriod = event.target.closest('[data-edit-period]'), deleteButton = event.target.closest('[data-delete-test], [data-delete-period]');
+            if (editTest) { const test = tests.find((item) => item.id === editTest.dataset.editTest); if (!test) return; editingTestId = test.id; $('#testSubject').value = test.subject_id; $('#testTitle').value = test.title; $('#testDate').value = test.test_date; $('#testSubmit').textContent = 'Opslaan'; $('#testCancel').hidden = false; $('#testTitle').focus(); return; }
+            if (editPeriod) { const period = periods.find((item) => item.id === editPeriod.dataset.editPeriod); if (!period) return; editingPeriodId = period.id; $('#periodName').value = period.name; $('#periodStart').value = period.start_date; $('#periodEnd').value = period.end_date; $('#periodSubmit').textContent = 'Opslaan'; $('#periodCancel').hidden = false; $('#periodName').focus(); return; }
+            if (deleteButton) {
+                if (deleteButton.dataset.armed !== 'true') { deleteButton.dataset.armed = 'true'; deleteButton.textContent = 'Zeker weten?'; setTimeout(() => { if (deleteButton.isConnected) { deleteButton.dataset.armed = ''; deleteButton.textContent = 'Verwijder'; } }, 3000); return; }
+                const isTest = Boolean(deleteButton.dataset.deleteTest);
+                const response = await apiFetch(`/api/${isTest ? 'tests' : 'periods'}/${isTest ? deleteButton.dataset.deleteTest : deleteButton.dataset.deletePeriod}`, { method: 'DELETE' });
+                if (response?.ok) { if (isTest) { await Promise.all([loadTests(), loadTasks()]); } else { await loadPeriods(); await loadTests(); } showDashboardToast(isTest ? 'Toets verwijderd.' : 'Periode verwijderd.'); }
+            }
+        });
         function renderRecentTasks() {
-            const list = $('#recentTasks'), upcoming = tasks.filter((task) => task.status !== 'completed').slice(0, 4); if (!upcoming.length) { list.innerHTML = '<li class="empty-state"><i class="fa-regular fa-calendar"></i><span>Je planning is helemaal vrij.</span></li>'; return; }
-            list.innerHTML = upcoming.map((task) => `<li class="modern-list-item compact"><span class="task-dot"></span><div class="list-item-content"><strong>${escapeHtml(task.title)}</strong><small>${task.due_date ? `<i class="fa-regular fa-calendar"></i> ${formatDate(task.due_date)}` : 'Geen deadline'}</small></div><button class="mini-complete" type="button" data-complete-task="${escapeHtml(task.id)}" aria-label="Voltooi ${escapeHtml(task.title)}"><i class="fa-solid fa-check"></i></button></li>`).join('');
+            const open = tasks.filter((task) => task.status !== 'completed').sort((left, right) => (left.due_date || '9999-12-31').localeCompare(right.due_date || '9999-12-31'));
+            const today = open.filter((task) => task.due_date && dueInfo(task.due_date).days <= 0), later = open.filter((task) => !task.due_date || dueInfo(task.due_date).days > 0).slice(0, 6);
+            updateLead();
+            $('#todayCount').textContent = today.length; $('#laterCount').textContent = later.length;
+            $('#todayTasks').innerHTML = today.length ? today.map(overviewTaskRow).join('') : `<li class="ws-empty"><p>${t('Niets gepland voor vandaag. Een goed moment om iets kleins te beginnen.')}</p></li>`;
+            $('#laterSection').hidden = !later.length;
+            $('#recentTasks').innerHTML = later.length ? later.map(overviewTaskRow).join('') : '';
+        }
+        const gradePeriodOrder = ['V4', 'V5', 'V6', 'Eindcijfers', 'Overig', 'Algemeen'];
+        const PASS_GRADE = 5.5;
+        const openGradeSubjects = new Set();
+        const gradePeriodLabel = (period) => period;
+        const safeGradePeriod = (value) => String(value || 'Algemeen').trim() || 'Algemeen';
+        const formatGrade = (value, digits = 1) => Number(value).toFixed(digits).replace('.', ',');
+        const formatGradeDate = (value) => value ? new Date(`${value}T00:00:00`).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+        function weightedGradeAverage(entries) {
+            const valid = entries.filter((entry) => entry.countsTowardAverage !== false && Number.isFinite(Number(entry.grade)));
+            if (!valid.length) return null;
+            const totalWeight = valid.reduce((sum, entry) => sum + Math.max(0.01, Number(entry.weight) || 1), 0);
+            return valid.reduce((sum, entry) => sum + (Number(entry.grade) * Math.max(0.01, Number(entry.weight) || 1)), 0) / totalWeight;
+        }
+        function gradePeriods() {
+            const found = new Set();
+            subjects.forEach((subject) => (subject.grades || []).forEach((entry) => found.add(safeGradePeriod(entry.period))));
+            return [...found].sort((left, right) => {
+                const leftIndex = gradePeriodOrder.indexOf(left), rightIndex = gradePeriodOrder.indexOf(right);
+                return (leftIndex < 0 ? 99 : leftIndex) - (rightIndex < 0 ? 99 : rightIndex) || left.localeCompare(right, 'nl', { numeric: true });
+            });
+        }
+        // The overall subject average ignores the imported "Eindcijfers" period when real periods exist, matching the server.
+        function subjectAverage(entries) {
+            const source = entries.filter((entry) => safeGradePeriod(entry.period) !== 'Eindcijfers');
+            return weightedGradeAverage(source.length ? source : entries);
+        }
+        function gradeCell(value, extra = '') {
+            if (value === null || value === undefined) return '<span class="gb-none">—</span>';
+            const low = value < PASS_GRADE - 0.0001;
+            return `<span class="gb-grade ${low ? 'is-low' : ''} ${extra}">${formatGrade(value)}${low ? '<span class="gb-sr"> onvoldoende</span>' : ''}</span>`;
+        }
+        function entryResult(entry) {
+            if (entry.resultText) return `<span class="gb-status">${escapeHtml(entry.resultText)}</span>`;
+            return gradeCell(Number(entry.grade));
+        }
+        function renderGradePeriodTabs() {
+            const tabs = $('#gradePeriodTabs');
+            const periods = gradePeriods();
+            if (activeGradePeriod !== 'all' && !periods.includes(activeGradePeriod)) activeGradePeriod = 'all';
+            tabs.hidden = periods.length < 1;
+            tabs.innerHTML = ['all', ...periods].map((period) => {
+                const selected = period === activeGradePeriod;
+                return `<button type="button" class="${selected ? 'active' : ''}" data-grade-period="${escapeHtml(period)}" aria-pressed="${selected}">${escapeHtml(period === 'all' ? 'Alle perioden' : gradePeriodLabel(period))} <span class="count">${period === 'all' ? subjects.reduce((n, subject) => n + (subject.grades || []).length, 0) : subjects.reduce((n, subject) => n + (subject.grades || []).filter((entry) => safeGradePeriod(entry.period) === period).length, 0)}</span></button>`;
+            }).join('');
+            $('#gbPeriodOptions').innerHTML = [...new Set(['V4', 'V5', 'V6', ...periods.filter((period) => period !== 'Eindcijfers')])].map((period) => `<option value="${escapeHtml(period)}"></option>`).join('');
+            $('#gbSubjectOptions').innerHTML = subjects.map((subject) => `<option value="${escapeHtml(subject.name)}"></option>`).join('');
+        }
+        function gradebookLead() {
+            const graded = subjects.map((subject) => ({ subject, ...subjectStats(subject) })).filter((item) => item.avg !== null);
+            if (!graded.length) return t('Nog geen cijfers. Importeer een back-up of voeg je eerste cijfer toe.');
+            const attention = graded.filter((item) => item.state === 'attention');
+            return `${t('Je gemiddelde staat op')} ${formatGrade(graded.reduce((sum, item) => sum + item.avg, 0) / graded.length)}${attention.length ? `. ${attention.map((item) => item.subject.name).join(` ${t('en')} `)} ${t('vraagt aandacht')}` : ''}.`;
+        }
+        function deleteGradeButton(entry) {
+            return entry.id ? `<button class="gb-delete" type="button" data-delete-grade="${escapeHtml(entry.id)}" aria-label="Verwijder ${escapeHtml(entry.label)}">Verwijder</button>` : '';
+        }
+        function renderGradeLog(shown) {
+            const rows = shown.flatMap((subject) => subject.visibleGrades.map((entry, index) => ({ ...entry, subject, order: index }))).sort((left, right) => (right.date || '').localeCompare(left.date || '') || right.order - left.order).slice(0, 12);
+            $('#gbLogSection').hidden = !rows.length;
+            $('#gbLog').innerHTML = rows.map((entry) => `<tr${colorStyle(entry.subject)}><td class="gb-muted">${escapeHtml(formatGradeDate(entry.date))}</td><th scope="row"><span class="spine"></span>${escapeHtml(entry.subject.name)}</th><td>${escapeHtml(entry.label)}</td><td class="gb-muted gb-hide-sm">${escapeHtml(safeGradePeriod(entry.period))}</td><td class="gb-num gb-muted gb-hide-sm">${entry.countsTowardAverage === false ? '—' : `${escapeHtml(formatGrade(entry.weight, Number.isInteger(Number(entry.weight)) ? 0 : 1))}×`}</td><td class="gb-num">${entryResult(entry)}</td><td class="gb-num">${deleteGradeButton(entry)}</td></tr>`).join('');
         }
         function renderSubjects() {
-            const header = $('#subjectTableHeader');
-            const list = $('#subjectList');
-            const gradeLabels = [];
-            subjects.forEach((subject) => (subject.grades || []).forEach((entry) => {
-                if (!gradeLabels.some((label) => normalizeCsvHeader(label) === normalizeCsvHeader(entry.label))) gradeLabels.push(entry.label);
-            }));
-            gradeLabels.sort((left, right) => left.localeCompare(right, 'nl', { numeric: true, sensitivity: 'base' }));
-            header.innerHTML = `<tr><th>Vak</th>${gradeLabels.map((label) => `<th>${escapeHtml(label)}</th>`).join('')}<th>Gemiddelde</th><th aria-label="Acties"></th></tr>`;
-            if (!subjects.length) { list.innerHTML = `<tr><td class="empty-state" colspan="${gradeLabels.length + 3}"><i class="fa-solid fa-book-open"></i><span>Nog geen vakken. Voeg je eerste vak toe of importeer een cijferlijst.</span></td></tr>`; return; }
-            list.innerHTML = subjects.map((subject) => {
-                const gradesByLabel = new Map((subject.grades || []).map((entry) => [normalizeCsvHeader(entry.label), Number(entry.grade)]));
-                const average = subject.grade === null || subject.grade === undefined ? null : Number(subject.grade);
-                return `<tr><th scope="row"><span class="subject-icon"><i class="fa-solid fa-book"></i></span><span>${escapeHtml(subject.name)}</span></th>${gradeLabels.map((label) => { const grade = gradesByLabel.get(normalizeCsvHeader(label)); return `<td>${grade === undefined ? '<span class="table-dash">—</span>' : `<span class="table-grade">${grade.toFixed(1)}</span>`}</td>`; }).join('')}<td class="subject-average">${average === null ? '<span class="table-dash">—</span>' : `<span class="average-grade">${average.toFixed(1)}</span>`}</td><td><button class="delete-button" type="button" data-delete-subject="${escapeHtml(subject.id)}" aria-label="Verwijder ${escapeHtml(subject.name)}"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
+            const header = $('#subjectTableHeader'), list = $('#subjectList');
+            renderGradePeriodTabs();
+            $('#gbLead').textContent = gradebookLead();
+            const selectedPeriod = activeGradePeriod === 'all' ? null : activeGradePeriod;
+            const shown = subjects.map((subject) => ({ ...subject, visibleGrades: (subject.grades || []).filter((entry) => !selectedPeriod || safeGradePeriod(entry.period) === selectedPeriod) })).filter((subject) => subject.visibleGrades.length);
+            renderGradeLog(shown);
+            if (!subjects.length) {
+                header.innerHTML = '';
+                list.innerHTML = '<tr><td class="gb-empty"><strong>Nog geen cijfers</strong><span>Importeer een Somtoday-back-up of CSV, of voeg je eerste cijfer handmatig toe.</span></td></tr>';
+                return;
+            }
+            if (!shown.length) { header.innerHTML = ''; list.innerHTML = `<tr><td class="gb-empty"><strong>Geen cijfers in ${escapeHtml(selectedPeriod)}</strong><span>Kies een andere periode.</span></td></tr>`; return; }
+            const periods = selectedPeriod ? [selectedPeriod] : gradePeriods().filter((period) => period !== 'Eindcijfers');
+            const hasFinal = !selectedPeriod && subjects.some((subject) => (subject.grades || []).some((entry) => safeGradePeriod(entry.period) === 'Eindcijfers'));
+            const columns = periods.length + (selectedPeriod ? 0 : 1) + (hasFinal ? 1 : 0);
+            header.innerHTML = `<tr><th scope="col">Vak</th>${periods.map((period) => `<th scope="col" class="gb-num">${escapeHtml(period)}</th>`).join('')}${selectedPeriod ? '' : '<th scope="col" class="gb-num gb-total">Gemiddeld</th>'}${hasFinal ? '<th scope="col" class="gb-num">Eind</th>' : ''}</tr>`;
+            list.innerHTML = shown.map((subject) => {
+                const open = openGradeSubjects.has(subject.id), all = subject.visibleGrades;
+                const average = selectedPeriod ? weightedGradeAverage(all) : subjectAverage(all);
+                const finalEntry = (subject.grades || []).find((entry) => safeGradePeriod(entry.period) === 'Eindcijfers');
+                const cells = periods.map((period) => { const entries = all.filter((entry) => safeGradePeriod(entry.period) === period); return `<td class="gb-num">${entries.length ? gradeCell(weightedGradeAverage(entries)) : '<span class="gb-none">—</span>'}</td>`; }).join('');
+                const detail = open ? `<tr class="gb-detail"><td colspan="${columns + 1}"><table class="gb-sub"><thead><tr><th scope="col">Toets</th><th scope="col">Datum</th><th scope="col" class="gb-hide-sm">Periode</th><th scope="col" class="gb-num">Cijfer</th><th scope="col" class="gb-num gb-hide-sm">Weging</th><th scope="col"><span class="gb-sr" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Acties</span></th></tr></thead><tbody>${[...all].sort((left, right) => (right.date || '').localeCompare(left.date || '')).map((entry) => `<tr><td>${escapeHtml(entry.label)}</td><td class="gb-muted">${escapeHtml(formatGradeDate(entry.date))}</td><td class="gb-muted gb-hide-sm">${escapeHtml(safeGradePeriod(entry.period))}</td><td class="gb-num">${entryResult(entry)}</td><td class="gb-num gb-muted gb-hide-sm">${entry.countsTowardAverage === false ? '—' : `${escapeHtml(formatGrade(entry.weight, Number.isInteger(Number(entry.weight)) ? 0 : 1))}×`}</td><td class="gb-num">${deleteGradeButton(entry)}</td></tr>`).join('')}</tbody></table><div class="gb-detail-foot"><button class="gb-delete" type="button" data-delete-subject="${escapeHtml(subject.id)}">Vak verwijderen</button></div></td></tr>` : '';
+                return `<tr${colorStyle(subject)}><th scope="row"><button class="gb-toggle" type="button" data-toggle-subject="${escapeHtml(subject.id)}" aria-expanded="${open}"><span class="gb-caret" aria-hidden="true"></span><span class="spine"></span><span>${escapeHtml(subject.name)}</span><small>${all.length}</small></button></th>${cells}${selectedPeriod ? '' : `<td class="gb-num gb-total">${gradeCell(average, 'is-total')}</td>`}${hasFinal ? `<td class="gb-num">${finalEntry ? entryResult(finalEntry) : '<span class="gb-none">—</span>'}</td>` : ''}</tr>${detail}`;
             }).join('');
         }
-        function renderChatHistory() {
-            const chatBox = $('#chatBox'); if (!chatHistory.length) { chatBox.innerHTML = '<div class="chat-message assistant"><div class="chat-role">✨ LifeBuddy Coach</div><div class="chat-bubble">Hoi! Waarmee kan ik je vandaag helpen? We kunnen samen een haalbare volgende stap kiezen.</div></div>'; return; }
-            chatBox.innerHTML = chatHistory.map((message) => `<div class="chat-message ${message.role === 'user' ? 'user' : 'assistant'}"><div class="chat-role">${message.role === 'user' ? 'Jij' : '✨ LifeBuddy Coach'}</div><div class="chat-bubble">${escapeHtml(message.message)}</div></div>`).join(''); scrollChatToLatest();
-        }
-        function scrollChatToLatest() { const chatBox = $('#chatBox'); if (!chatBox) return; requestAnimationFrame(() => { chatBox.scrollTop = chatBox.scrollHeight; }); }
-        let buddyPreferences = { name: 'Buddy', color: 'violet', accessory: 'star', hidden: false };
-        const buddyAccessories = { star: '✨', book: '📚', leaf: '🌿', crown: '👑' };
-        function buddyStorageKey() { return `lifebuddy-buddy-${currentUser?.id || 'guest'}`; }
-        function saveBuddyPreferences() { localStorage.setItem(buddyStorageKey(), JSON.stringify(buddyPreferences)); }
-        function applyBuddyPreferences() {
-            const name = buddyPreferences.name || 'Buddy', launcher = $('#buddyLauncher'), color = ['violet', 'aqua', 'rose', 'gold'].includes(buddyPreferences.color) ? buddyPreferences.color : 'violet';
-            launcher.classList.remove('buddy-violet', 'buddy-aqua', 'buddy-rose', 'buddy-gold'); launcher.classList.add(`buddy-${color}`);
-            $('#buddyLabel').textContent = name; $('#buddyPanelName').textContent = name; $('#buddySpeech').textContent = `Hoi, ik ben ${name}!`; $('#buddyAccessory').textContent = buddyAccessories[buddyPreferences.accessory] || buddyAccessories.star; $('#buddyName').value = name;
-            document.querySelectorAll('[data-buddy-color]').forEach((button) => button.classList.toggle('selected', button.dataset.buddyColor === color));
-            document.querySelectorAll('[data-buddy-accessory]').forEach((button) => button.classList.toggle('selected', button.dataset.buddyAccessory === buddyPreferences.accessory));
-            $('#buddyWidget').hidden = Boolean(buddyPreferences.hidden); $('#restoreBuddy').hidden = !buddyPreferences.hidden;
-        }
-        function loadBuddyPreferences() {
-            try { buddyPreferences = { ...buddyPreferences, ...JSON.parse(localStorage.getItem(buddyStorageKey()) || '{}') }; } catch { /* Use the default companion when saved data is invalid. */ }
-            applyBuddyPreferences();
-        }
-        function setBuddyPanel(open) {
-            const panel = $('#buddyPanel'); panel.hidden = !open; $('#buddyLauncher').setAttribute('aria-expanded', String(open));
-            $('#buddySpeech').textContent = open ? 'Ik luister!' : `Hoi, ik ben ${buddyPreferences.name || 'Buddy'}!`;
-            if (open) { scrollChatToLatest(); requestAnimationFrame(() => $('#chatInput').focus()); }
-        }
-        function hideBuddy() { buddyPreferences.hidden = true; saveBuddyPreferences(); setBuddyPanel(false); applyBuddyPreferences(); }
-        function restoreBuddy() { buddyPreferences.hidden = false; saveBuddyPreferences(); applyBuddyPreferences(); setBuddyPanel(true); }
         async function loadUser() {
             const response = await apiFetch('/api/user/profile'); if (!response?.ok) return; currentUser = await response.json(); const name = currentUser.name || currentUser.email.split('@')[0], initial = name[0].toUpperCase();
-            $('#userName').textContent = name; $('#greetingName').textContent = name.split(' ')[0]; $('#userEmail').textContent = currentUser.email; $('#userAvatar').textContent = initial; $('#mobileAvatar').textContent = initial; $('#planBadge').textContent = currentUser.plan === 'pro' ? '★ Pro' : 'Free'; $('#planBadge').classList.toggle('pro', currentUser.plan === 'pro'); updateStreak(Number(currentUser.streak) || 0); loadBuddyPreferences();
+            $('#userName').textContent = name; $('#greetingName').textContent = name.split(' ')[0]; $('#userEmail').textContent = currentUser.email; $('#userAvatar').textContent = initial; $('#mobileAvatar').textContent = initial; $('#planBadge').textContent = 'Persoonlijk account'; $('#planBadge').classList.remove('pro'); window.Game?.setUserScope(currentUser.id); updateStreak(Number(currentUser.streak) || 0);
         }
         async function loadTasks() { const response = await apiFetch('/api/tasks'); if (!response?.ok) return; tasks = await response.json(); renderTasks(); renderRecentTasks(); }
-        async function loadSubjects() { const response = await apiFetch('/api/subjects'); if (!response?.ok) return; subjects = await response.json(); renderSubjects(); }
-        async function loadStats() { const response = await apiFetch('/api/stats'); if (!response?.ok) return; dashboardStats = await response.json(); $('#statTasks').textContent = dashboardStats.tasks || 0; $('#statSubjects').textContent = dashboardStats.subjects || 0; $('#statChats').textContent = dashboardStats.chats || 0; updateStreak(Number(dashboardStats.streak) || 0); updateAnalytics(dashboardStats); }
-        async function loadChatHistory() { const response = await apiFetch('/api/chat/history'); if (!response?.ok) return; chatHistory = (await response.json()).history || []; renderChatHistory(); }
+        async function loadSubjects() { const response = await apiFetch('/api/subjects'); if (!response?.ok) return; subjects = await response.json(); renderSubjects(); renderSidebarSubjects(); renderOverviewSubjects(); populateTaskSubjects(); renderTasks(); renderTests(); }
+        async function loadStats() { const response = await apiFetch('/api/stats'); if (!response?.ok) return; dashboardStats = await response.json(); updateStreak(Number(dashboardStats.streak) || 0); updateAnalytics(dashboardStats); updateLead(); }
         function setFriendStatus(message = '', type = '') { const status = $('#friendStatus'); status.textContent = message; status.className = `friend-status ${type}`.trim(); }
         function renderFriends() {
             const friendCount = $('#friendCount'), list = $('#friendsList'), requests = $('#friendRequests');
             friendCount.textContent = friends.length;
-            list.innerHTML = friends.length ? friends.map((friend) => `<article class="friend-row"><span class="friend-avatar">${escapeHtml(friend.initials)}</span><div><strong>${escapeHtml(friend.name)}</strong><small><i class="fa-solid fa-fire"></i> ${Number(friend.streak) || 0} dagen · ${Number(friend.subjects) || 0} vakken</small></div><button class="friend-view-button" type="button" data-view-friend="${escapeHtml(friend.id)}" aria-label="Bekijk profiel van ${escapeHtml(friend.name)}"><i class="fa-solid fa-arrow-up-right-from-square"></i></button></article>`).join('') : '<p class="friends-empty"><i class="fa-solid fa-users"></i><span>Nodig iemand uit om jullie voortgang te delen.</span></p>';
+            list.innerHTML = friends.length ? friends.map((friend) => `<article class="friend-row"><span class="friend-avatar">${escapeHtml(friend.initials)}</span><div><strong>${escapeHtml(friend.name)}</strong><small><i class="fa-solid fa-fire"></i> ${Number(friend.streak) || 0} dagen · ${Number(friend.subjects) || 0} vakken</small></div><button class="friend-view-button" type="button" data-view-friend="${escapeHtml(friend.id)}" aria-label="Bekijk profiel van ${escapeHtml(friend.name)}"><i class="fa-solid fa-arrow-up-right-from-square"></i></button></article>`).join('') : '<p class="friends-empty">Nodig iemand uit om jullie voortgang te delen.</p>';
             const incoming = incomingRequests.map((request) => `<article class="friend-request"><span class="friend-avatar compact">${escapeHtml(request.initials)}</span><div><strong>${escapeHtml(request.name)}</strong><small>wil je toevoegen</small></div><div class="request-actions"><button type="button" data-answer-friend-request="${escapeHtml(request.id)}" data-request-status="accepted" aria-label="Accepteer ${escapeHtml(request.name)}"><i class="fa-solid fa-check"></i></button><button type="button" data-answer-friend-request="${escapeHtml(request.id)}" data-request-status="declined" aria-label="Weiger ${escapeHtml(request.name)}"><i class="fa-solid fa-xmark"></i></button></div></article>`).join('');
             const outgoing = outgoingRequests.map((request) => `<p class="outgoing-request"><i class="fa-regular fa-clock"></i> Uitnodiging naar ${escapeHtml(request.name)} is verstuurd.</p>`).join('');
             requests.innerHTML = incoming ? `<div class="friend-request-title">Uitnodigingen <span>${incomingRequests.length}</span></div>${incoming}` : outgoing;
@@ -291,12 +539,32 @@
                 content.innerHTML = `<div class="friend-profile-hero"><span class="friend-avatar profile">${escapeHtml(profile.initials)}</span><div><span class="card-kicker">LIFEBUDDY PROFIEL</span><h2 id="friendProfileTitle">${escapeHtml(profile.name)}</h2><p><i class="fa-solid fa-fire"></i> ${Number(profile.streak) || 0} dagen streak</p></div></div><div class="friend-profile-stats"><div><strong>${completion}%</strong><span>Taken klaar</span></div><div><strong>${Number(profile.subjects) || 0}</strong><span>Vakken</span></div><div><strong>${average}</strong><span>Gemiddelde</span></div></div><div class="friend-profile-note"><i class="fa-solid fa-shield-heart"></i><p>Je ziet alleen de gedeelde voortgang van ${escapeHtml(profile.name)} — nooit privé-taken of chatberichten.</p></div>`;
             } catch (error) { content.innerHTML = `<div class="friend-profile-error"><i class="fa-solid fa-circle-exclamation"></i><p>${escapeHtml(error.message)}</p></div>`; }
         }
-        async function refreshData({ tasks: shouldLoadTasks = true, subjects: shouldLoadSubjects = true, chats: shouldLoadChats = false } = {}) { const requests = [loadStats()]; if (shouldLoadTasks) requests.push(loadTasks()); if (shouldLoadSubjects) requests.push(loadSubjects()); if (shouldLoadChats) requests.push(loadChatHistory()); await Promise.all(requests); }
+        async function refreshData({ tasks: shouldLoadTasks = true, subjects: shouldLoadSubjects = true, } = {}) { const requests = [loadStats(), loadTests()]; if (shouldLoadTasks) requests.push(loadTasks()); if (shouldLoadSubjects) requests.push(loadSubjects()); await Promise.all(requests); }
         async function completeTask(id) { const task = tasks.find((item) => item.id === id); if (!task || task.status === 'completed') return; const response = await apiFetch(`/api/tasks/${id}`, { method: 'PUT', body: JSON.stringify({ ...task, status: 'completed' }) }); if (response?.ok) { window.Game?.completeTask(); await refreshData({ subjects: false }); } }
         async function deleteTask(id) { if (!window.confirm('Deze taak verwijderen?')) return; const response = await apiFetch(`/api/tasks/${id}`, { method: 'DELETE' }); if (response?.ok) await refreshData({ subjects: false }); }
         async function deleteSubject(id) { if (!window.confirm('Dit vak verwijderen?')) return; const response = await apiFetch(`/api/subjects/${id}`, { method: 'DELETE' }); if (response?.ok) await refreshData({ tasks: false }); }
-        $('#taskForm').addEventListener('submit', async (event) => { event.preventDefault(); const title = $('#taskTitle').value.trim(); if (!title) return; const response = await apiFetch('/api/tasks', { method: 'POST', body: JSON.stringify({ title, description: $('#taskDesc').value.trim(), due_date: $('#taskDue').value }) }); if (response?.ok) { event.currentTarget.reset(); window.Game?.registerActivity(); await refreshData({ subjects: false }); } else if (response) alert(`❌ ${(await response.json()).error || 'Taak toevoegen mislukt.'}`); });
-        $('#subjectForm').addEventListener('submit', async (event) => { event.preventDefault(); const name = $('#subjectName').value.trim(); if (!name) return; const gradeValue = $('#subjectGrade').value; const label = $('#subjectGradeLabel').value.trim() || 'Cijfer'; try { const response = await apiFetch('/api/subjects', { method: 'POST', body: JSON.stringify({ name, label, grade: gradeValue === '' ? null : Number(gradeValue) }) }); if (response?.ok) { event.currentTarget.reset(); window.Game?.addSubject(); await refreshData({ tasks: false }); } else if (response) alert(`❌ ${(await response.json()).error || 'Vak toevoegen mislukt.'}`); } catch (error) { alert(`❌ ${error.message}`); } });
+        $('#taskForm').addEventListener('submit', async (event) => { event.preventDefault(); const form = event.currentTarget; const title = $('#taskTitle').value.trim(); if (!title) return; const response = await apiFetch('/api/tasks', { method: 'POST', body: JSON.stringify({ title, description: $('#taskDesc').value.trim(), due_date: $('#taskDue').value, subject_id: $('#taskSubject').value || null, test_id: $('#taskTest').value || null }) }); if (response?.ok) { form.reset(); window.Game?.registerActivity(); await refreshData({ subjects: false }); showDashboardToast('Taak toegevoegd.'); } else if (response) showDashboardToast((await response.json()).error || 'Taak toevoegen mislukt.', 'error'); });
+        function setGradeFormOpen(open) { const form = $('#subjectForm'), toggle = $('#gbAddToggle'); form.hidden = !open; toggle.setAttribute('aria-expanded', String(open)); if (open) { $('#gbImportPanel').hidden = true; $('#gbImportToggle').setAttribute('aria-expanded', 'false'); if (!$('#subjectPeriod').value && activeGradePeriod !== 'all' && activeGradePeriod !== 'Eindcijfers') $('#subjectPeriod').value = activeGradePeriod; $('#subjectName').focus(); } }
+        function setGradeImportOpen(open) { $('#gbImportPanel').hidden = !open; $('#gbImportToggle').setAttribute('aria-expanded', String(open)); if (open) setGradeFormOpen(false); }
+        $('#subjectForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const form = event.currentTarget, error = $('#gbFormError'), submit = form.querySelector('[type="submit"]');
+            const name = $('#subjectName').value.trim().replace(/\s+/g, ' '), gradeValue = $('#subjectGrade').value.replace(',', '.'), grade = Number(gradeValue), weight = Number(($('#subjectWeight').value || '1').replace(',', '.'));
+            const fail = (message, field) => { error.textContent = message; field?.focus(); };
+            error.textContent = '';
+            if (!name) return fail('Vul een vaknaam in.', $('#subjectName'));
+            if (gradeValue === '' || !Number.isFinite(grade) || grade < 0 || grade > 10) return fail('Vul een cijfer tussen 0 en 10 in.', $('#subjectGrade'));
+            if (!Number.isFinite(weight) || weight <= 0) return fail('De weging moet groter zijn dan 0.', $('#subjectWeight'));
+            submit.disabled = true; submit.textContent = 'Opslaan…';
+            try {
+                const entry = { label: $('#subjectGradeLabel').value.trim() || 'Toets', grade, weight, period: $('#subjectPeriod').value.trim() || 'Algemeen', date: $('#subjectDate').value || null };
+                const response = await apiFetch('/api/subjects', { method: 'POST', body: JSON.stringify({ name, grades: [entry] }) });
+                if (response?.ok) { const keepPeriod = $('#subjectPeriod').value; form.reset(); $('#subjectWeight').value = 1; $('#subjectPeriod').value = keepPeriod; window.Game?.addSubject(); await refreshData({ tasks: false }); showDashboardToast('Cijfer opgeslagen.'); $('#subjectName').focus(); }
+                else if (response) fail((await response.json()).error || 'Opslaan is niet gelukt.');
+            } catch (failure) { fail(failure.message || 'Opslaan is niet gelukt.'); }
+            finally { submit.disabled = false; submit.textContent = 'Opslaan'; }
+        });
+        async function deleteGrade(id) { const response = await apiFetch(`/api/grade-entries/${id}`, { method: 'DELETE' }); if (response?.ok) { await refreshData({ tasks: false }); showDashboardToast('Cijfer verwijderd.'); } else if (response) showDashboardToast((await response.json()).error || 'Verwijderen mislukt.', 'error'); }
 
         let csvImportSubjects = [];
 
@@ -340,10 +608,75 @@
             return Number.isFinite(grade) && grade >= 0 && grade <= 10 ? grade : null;
         }
 
+        function parseGradeDate(value) {
+            const text = String(value || '').trim();
+            let year, month, day, match;
+            if ((match = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) [, year, month, day] = match;
+            else if ((match = text.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2}|\d{4})$/))) { [, day, month, year] = match; if (year.length === 2) year = `20${year}`; }
+            else return null;
+            year = Number(year); month = Number(month); day = Number(day);
+            const check = new Date(Date.UTC(year, month - 1, day));
+            if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) return null;
+            return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        }
+        // Long format: one row per grade, e.g. "Vak; Toets; Datum; Cijfer; Weging; Periode". Returns null when the file is not in this shape.
+        function parseLongGradeCsv(rows, delimiter) {
+            const headers = rows[0].map(normalizeCsvHeader);
+            const find = (pattern) => headers.findIndex((header) => pattern.test(header));
+            const columns = {
+                subject: find(/^(vak|vakken|subject|course)$/),
+                grade: find(/^(cijfer|grade|score|resultaat)$/),
+                label: find(/^(toets|test|omschrijving|beoordeling|label|description|assessment)$/),
+                date: find(/^(datum|date)$/),
+                weight: find(/^(weging|weight|gewicht)$/),
+                period: find(/^(periode|period)$/)
+            };
+            if (columns.subject < 0 || columns.grade < 0) return null;
+            if (columns.label < 0 && columns.date < 0 && columns.weight < 0 && columns.period < 0) return null;
+            const gradesBySubject = new Map(), counters = new Map(), problems = [];
+            let ignoredRows = 0;
+            rows.slice(1).forEach((row, index) => {
+                const line = index + 2;
+                const name = String(row[columns.subject] || '').trim().replace(/\s+/g, ' ');
+                const rawGrade = String(row[columns.grade] || '').trim();
+                if (!name && !rawGrade) return;
+                const grade = parseGrade(rawGrade);
+                if (!name) { problems.push(`Regel ${line}: vak ontbreekt.`); ignoredRows++; return; }
+                if (grade === null) { problems.push(`Regel ${line} (${name}): “${rawGrade || 'leeg'}” is geen cijfer tussen 0 en 10.`); ignoredRows++; return; }
+                const rawWeight = columns.weight >= 0 ? String(row[columns.weight] || '').trim() : '';
+                const weight = rawWeight === '' ? 1 : Number(rawWeight.replace(',', '.').replace(/x$/i, ''));
+                if (!Number.isFinite(weight) || weight <= 0) { problems.push(`Regel ${line} (${name}): weging “${rawWeight}” is ongeldig.`); ignoredRows++; return; }
+                const rawDate = columns.date >= 0 ? String(row[columns.date] || '').trim() : '';
+                const date = rawDate ? parseGradeDate(rawDate) : null;
+                if (rawDate && !date) { problems.push(`Regel ${line} (${name}): datum “${rawDate}” niet herkend. Gebruik bijv. 2026-10-02 of 02-10-2026.`); ignoredRows++; return; }
+                const period = columns.period >= 0 ? String(row[columns.period] || '').trim() || 'Algemeen' : 'Algemeen';
+                const key = normalizeCsvHeader(name);
+                const counterKey = `${key}|${normalizeCsvHeader(period)}`;
+                counters.set(counterKey, (counters.get(counterKey) || 0) + 1);
+                const label = (columns.label >= 0 ? String(row[columns.label] || '').trim() : '') || `Toets ${counters.get(counterKey)}`;
+                const current = gradesBySubject.get(key) || { name, grades: [] };
+                current.grades.push({ label, grade, weight, period, date });
+                gradesBySubject.set(key, current);
+            });
+            const subjects = [...gradesBySubject.values()];
+            if (!subjects.length) throw new Error(problems[0] || 'Geen geldige cijfers gevonden in dit bestand.');
+            return { subjects, ignoredRows, problems, delimiter, source: 'csv-rows' };
+        }
+
+        function downloadGradeCsvTemplate() {
+            const rows = ['Vak;Toets;Datum;Cijfer;Weging;Periode', 'Nederlands;Betoog;2026-09-18;7,1;2;V4', 'Wiskunde B;Hoofdstuk 2 toets;2026-09-24;5,8;3;V4', 'Engels;Speaking;2026-10-02;8,0;1;V4'];
+            const url = URL.createObjectURL(new Blob(['\uFEFF' + rows.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+            const link = Object.assign(document.createElement('a'), { href: url, download: 'lifebuddy-cijfers-voorbeeld.csv' });
+            document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+        }
+
         function parseGradeCsv(text) {
             const delimiter = detectCsvDelimiter(text);
             const rows = parseCsvRows(text.replace(/^\uFEFF/, ''), delimiter);
             if (rows.length < 1) throw new Error('Het bestand is leeg.');
+
+            const longFormat = parseLongGradeCsv(rows, delimiter);
+            if (longFormat) return longFormat;
 
             const headers = rows[0].map(normalizeCsvHeader);
             const subjectColumn = headers.findIndex((header) => /^(vak|vakken|subject|course|naam|name)$/.test(header));
@@ -374,6 +707,51 @@
             return { subjects, ignoredRows, delimiter };
         }
 
+        function backupPeriodForGrade(column = {}) {
+            const number = String(column.KolomNummer || '');
+            if (Number(column.KolomSoort) === 2 || number.startsWith('169')) return 'Eindcijfers';
+            if (number.startsWith('14')) return 'V4';
+            if (number.startsWith('15')) return 'V5';
+            if (number.startsWith('16')) return 'V6';
+            return 'Overig';
+        }
+
+        function parseStGradesBackup(text) {
+            let backup;
+            try { backup = JSON.parse(text); } catch { throw new Error('Dit .stgrades-bestand is geen geldige Somtoday-back-up.'); }
+            if (!Array.isArray(backup.grades)) throw new Error('In deze back-up zijn geen cijfers gevonden.');
+            const gradesBySubject = new Map();
+            let ignoredRows = 0;
+            backup.grades.forEach((record) => {
+                const column = record?.CijferKolom || {};
+                const columnType = Number(column.KolomSoort);
+                const rawResult = String(record?.CijferStr || '').trim();
+                const grade = parseGrade(rawResult);
+                const isPass = /^v$/i.test(rawResult);
+                const name = String(record?.Vak?.Omschrijving || '').trim().replace(/\s+/g, ' ');
+                if (!name || (grade === null && !isPass) || ![1, 2].includes(columnType)) { ignoredRows++; return; }
+                const period = backupPeriodForGrade(column);
+                const baseLabel = String(column.KolomOmschrijving || column.KolomKop || column.KolomNaam || 'Beoordeling').trim().slice(0, 45);
+                const label = columnType === 2 ? 'Eindgemiddelde' : (baseLabel || 'Beoordeling');
+                const key = normalizeCsvHeader(name);
+                const current = gradesBySubject.get(key) || { name, grades: [] };
+                if (columnType === 2 && current.grades.some((entry) => entry.period === 'Eindcijfers')) { ignoredRows++; return; }
+                current.grades.push({
+                    label,
+                    grade: grade === null ? 0 : grade,
+                    period,
+                    weight: columnType === 2 ? 1 : Math.max(1, Number(column.Weging) || 1),
+                    resultText: isPass ? 'Voldoende' : null,
+                    countsTowardAverage: !isPass
+                });
+                gradesBySubject.set(key, current);
+            });
+            const subjects = [...gradesBySubject.values()];
+            if (!subjects.length) throw new Error('Geen numerieke beoordelingen gevonden in deze cijferback-up.');
+            const className = String(backup?.year?.groep?.omschrijving || backup?.year?.studie?.code || '').trim();
+            return { subjects, ignoredRows, source: 'stgrades', className };
+        }
+
         function setCsvStatus(message, type = '') {
             const status = $('#csvImportStatus');
             status.textContent = message;
@@ -392,15 +770,19 @@
         $('#csvFileInput').addEventListener('change', async (event) => {
             const file = event.target.files?.[0];
             if (!file) return clearCsvImport();
-            if (!file.name.toLowerCase().endsWith('.csv')) { clearCsvImport('Kies een bestand met de extensie .csv.'); $('#csvImportStatus').classList.add('error'); return; }
-            if (file.size > 2 * 1024 * 1024) { clearCsvImport('Dit CSV-bestand is te groot. Gebruik maximaal 2 MB.'); $('#csvImportStatus').classList.add('error'); return; }
+            const isBackup = file.name.toLowerCase().endsWith('.stgrades');
+            const isCsv = file.name.toLowerCase().endsWith('.csv');
+            if (!isBackup && !isCsv) { clearCsvImport('Kies een .stgrades-back-up of een .csv-bestand.'); $('#csvImportStatus').classList.add('error'); return; }
+            if (file.size > 4 * 1024 * 1024) { clearCsvImport('Dit bestand is te groot. Gebruik maximaal 4 MB.'); $('#csvImportStatus').classList.add('error'); return; }
 
             try {
-                const result = parseGradeCsv(await file.text());
+                const result = isBackup ? parseStGradesBackup(await file.text()) : parseGradeCsv(await file.text());
                 csvImportSubjects = result.subjects;
-                const examples = result.subjects.slice(0, 5).map((subject) => `<li><span>${escapeHtml(subject.name)}</span><strong>${subject.grades.map((entry) => `${escapeHtml(entry.label)}: ${entry.grade.toFixed(1)}`).join(' · ')}</strong></li>`).join('');
+                const examples = result.subjects.slice(0, 5).map((subject) => `<li><span>${escapeHtml(subject.name)}</span><strong>${subject.grades.map((entry) => `${escapeHtml(entry.label)}: ${escapeHtml(entry.resultText || formatGrade(entry.grade))}${entry.weight > 1 ? ` (${entry.weight}×)` : ''}`).join(' · ')}</strong></li>`).join('');
                 const totalGrades = result.subjects.reduce((total, subject) => total + subject.grades.length, 0);
-                $('#csvPreview').innerHTML = `<div class="csv-preview-heading"><strong>${result.subjects.length} vak${result.subjects.length === 1 ? '' : 'ken'} en ${totalGrades} cijfer${totalGrades === 1 ? '' : 's'} klaar voor import</strong><span>${result.ignoredRows ? `${result.ignoredRows} rij${result.ignoredRows === 1 ? '' : 'en'} overgeslagen` : 'Alle rijen zijn geldig'}</span></div><ul>${examples}</ul>${result.subjects.length > 5 ? `<p>+ ${result.subjects.length - 5} meer vakken</p>` : ''}`;
+                const problemList = (result.problems || []).length ? `<ul class="csv-problems">${result.problems.slice(0, 5).map((message) => `<li>${escapeHtml(message)}</li>`).join('')}${result.problems.length > 5 ? `<li>+ ${result.problems.length - 5} andere regels</li>` : ''}</ul>` : '';
+                const backupNote = result.source === 'stgrades' ? `Somtoday-back-up${result.className ? ` · ${escapeHtml(result.className)}` : ''} · ingedeeld in V4, V5, V6 en eindcijfers` : '';
+                $('#csvPreview').innerHTML = `<div class="csv-preview-heading"><strong>${result.subjects.length} vak${result.subjects.length === 1 ? '' : 'ken'} en ${totalGrades} beoordeling${totalGrades === 1 ? '' : 'en'} klaar voor import</strong><span>${result.ignoredRows ? `${result.ignoredRows} regel${result.ignoredRows === 1 ? '' : 's'} zonder bruikbare beoordeling overgeslagen` : 'Alle regels zijn geldig'}</span></div>${backupNote ? `<p>${backupNote}</p>` : ''}${problemList}<ul>${examples}</ul>${result.subjects.length > 5 ? `<p>+ ${result.subjects.length - 5} meer vakken</p>` : ''}`;
                 $('#csvPreview').hidden = false;
                 $('#csvImportActions').hidden = false;
                 setCsvStatus(`“${file.name}” is gecontroleerd. Bekijk de preview en bevestig de import.`, 'ready');
@@ -436,36 +818,36 @@
                 button.innerHTML = '<i class="fa-solid fa-file-import"></i> Importeer cijfers';
             }
         });
-        $('#chatForm').addEventListener('submit', async (event) => {
-            event.preventDefault(); const input = $('#chatInput'), message = input.value.trim(); if (!message) return; const chatBox = $('#chatBox'); chatBox.insertAdjacentHTML('beforeend', `<div class="chat-message user"><div class="chat-role">Jij</div><div class="chat-bubble">${escapeHtml(message)}</div></div><div class="chat-message assistant" id="typingMessage"><div class="chat-role">✨ LifeBuddy Coach</div><div class="chat-bubble typing-indicator"><span></span><span></span><span></span></div></div>`); input.value = ''; chatBox.scrollTop = chatBox.scrollHeight;
-            try { const response = await apiFetch('/api/chat', { method: 'POST', body: JSON.stringify({ message }) }); $('#typingMessage')?.remove(); if (response?.ok) { const data = await response.json(); chatHistory = data.history || []; renderChatHistory(); window.Game?.sendChat(); await loadStats(); } else if (response) { const error = await response.json(); chatBox.insertAdjacentHTML('beforeend', `<div class="chat-message assistant"><div class="chat-role">✨ LifeBuddy Coach</div><div class="chat-bubble error-bubble">${escapeHtml(error.error || 'Er ging iets mis.')}</div></div>`); } } catch { $('#typingMessage')?.remove(); chatBox.insertAdjacentHTML('beforeend', '<div class="chat-message assistant"><div class="chat-role">✨ LifeBuddy Coach</div><div class="chat-bubble error-bubble">Verbinding mislukt. Probeer het opnieuw.</div></div>'); } chatBox.scrollTop = chatBox.scrollHeight;
-        });
-        $('#buddyLauncher').addEventListener('click', () => setBuddyPanel($('#buddyPanel').hidden));
-        $('#closeBuddyPanel').addEventListener('click', () => setBuddyPanel(false));
-        $('#hideBuddy').addEventListener('click', hideBuddy); $('#restoreBuddy').addEventListener('click', restoreBuddy);
-        $('#toggleBuddyCustomizer').addEventListener('click', () => { const customizer = $('#buddyCustomizer'); customizer.hidden = !customizer.hidden; if (!customizer.hidden) $('#buddyName').focus(); });
-        $('#buddyName').addEventListener('change', (event) => { buddyPreferences.name = event.target.value.trim().slice(0, 18) || 'Buddy'; saveBuddyPreferences(); applyBuddyPreferences(); });
-        document.querySelectorAll('[data-buddy-color]').forEach((button) => button.addEventListener('click', () => { buddyPreferences.color = button.dataset.buddyColor; saveBuddyPreferences(); applyBuddyPreferences(); }));
-        document.querySelectorAll('[data-buddy-accessory]').forEach((button) => button.addEventListener('click', () => { buddyPreferences.accessory = button.dataset.buddyAccessory; saveBuddyPreferences(); applyBuddyPreferences(); }));
-        $('#toggleFriendInvite').addEventListener('click', () => { const form = $('#friendInviteForm'); form.hidden = !form.hidden; if (!form.hidden) $('#friendEmail').focus(); });
+        $('#toggleFriendInvite').addEventListener('click', () => { const form = $('#friendInviteForm'); form.hidden = !form.hidden; $('#toggleFriendInvite').setAttribute('aria-expanded', String(!form.hidden)); if (!form.hidden) $('#friendEmail').focus(); });
         $('#friendInviteForm').addEventListener('submit', async (event) => { event.preventDefault(); const input = $('#friendEmail'), email = input.value.trim(); if (!email) return; try { await sendFriendRequest(email); event.currentTarget.reset(); event.currentTarget.hidden = true; } catch (error) { setFriendStatus(error.message, 'error'); } });
         $('#closeFriendProfile').addEventListener('click', closeFriendProfile); $('#closeFriendProfileButton').addEventListener('click', closeFriendProfile);
-        document.addEventListener('keydown', (event) => { if (event.key !== 'Escape') return; if (!$('#friendProfileModal').hidden) return closeFriendProfile(); if (!$('#buddyPanel').hidden) setBuddyPanel(false); });
+        document.addEventListener('keydown', (event) => { if (event.key !== 'Escape') return; if (!$('#friendProfileModal').hidden) return closeFriendProfile(); });
         document.addEventListener('click', async (event) => {
+            if (event.target.closest('#gbTemplateDownload')) return downloadGradeCsvTemplate();
+            const openSubject = event.target.closest('[data-open-subject]'); if (openSubject) { activeGradePeriod = 'all'; openGradeSubjects.add(openSubject.dataset.openSubject); renderSubjects(); showPage('subjects'); return; }
+            if (event.target.closest('#gbAddToggle')) return setGradeFormOpen($('#subjectForm').hidden);
+            if (event.target.closest('#gbImportToggle')) return setGradeImportOpen($('#gbImportPanel').hidden);
+            const toggleSubject = event.target.closest('[data-toggle-subject]'); if (toggleSubject) { const id = toggleSubject.dataset.toggleSubject; openGradeSubjects.has(id) ? openGradeSubjects.delete(id) : openGradeSubjects.add(id); renderSubjects(); document.querySelector(`[data-toggle-subject="${CSS.escape(id)}"]`)?.focus(); return; }
+            const deleteGradeButton = event.target.closest('[data-delete-grade]');
+            if (deleteGradeButton) {
+                if (deleteGradeButton.dataset.armed !== 'true') { deleteGradeButton.dataset.armed = 'true'; deleteGradeButton.textContent = 'Zeker weten?'; setTimeout(() => { if (deleteGradeButton.isConnected) { deleteGradeButton.dataset.armed = ''; deleteGradeButton.textContent = 'Verwijder'; } }, 3000); return; }
+                return deleteGrade(deleteGradeButton.dataset.deleteGrade);
+            }
+            const gradePeriodButton = event.target.closest('[data-grade-period]'); if (gradePeriodButton) { activeGradePeriod = gradePeriodButton.dataset.gradePeriod; renderSubjects(); return; }
             const completeButton = event.target.closest('[data-complete-task]'); if (completeButton) return completeTask(completeButton.dataset.completeTask);
             const deleteTaskButton = event.target.closest('[data-delete-task]'); if (deleteTaskButton) return deleteTask(deleteTaskButton.dataset.deleteTask);
             const deleteSubjectButton = event.target.closest('[data-delete-subject]'); if (deleteSubjectButton) return deleteSubject(deleteSubjectButton.dataset.deleteSubject);
             const requestButton = event.target.closest('[data-answer-friend-request]'); if (requestButton) return answerFriendRequest(requestButton.dataset.answerFriendRequest, requestButton.dataset.requestStatus);
             const friendButton = event.target.closest('[data-view-friend]'); if (friendButton) return openFriendProfile(friendButton.dataset.viewFriend);
         });
-        function showPage(page) { document.querySelectorAll('.sidebar-nav-item[data-page]').forEach((button) => button.classList.toggle('active', button.dataset.page === page)); document.querySelectorAll('.dashboard-page').forEach((section) => section.classList.toggle('active', section.id === `page-${page}`)); document.body.classList.remove('sidebar-open'); $('#sidebarToggle').setAttribute('aria-expanded', 'false'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
-        document.querySelectorAll('.sidebar-nav-item[data-page]').forEach((button) => button.addEventListener('click', () => showPage(button.dataset.page))); $('#openTasks').addEventListener('click', () => showPage('tasks')); $('#viewAllTasks').addEventListener('click', () => showPage('tasks')); $('#viewAchievements').addEventListener('click', () => showPage('achievements')); $('#sidebarToggle').addEventListener('click', () => { const open = document.body.classList.toggle('sidebar-open'); $('#sidebarToggle').setAttribute('aria-expanded', String(open)); }); $('#sidebarOverlay').addEventListener('click', () => { document.body.classList.remove('sidebar-open'); $('#sidebarToggle').setAttribute('aria-expanded', 'false'); }); $('#logoutBtn').addEventListener('click', () => { localStorage.removeItem('token'); window.location.replace('/'); });
-        document.querySelectorAll('.analytics-tabs button').forEach((button) => button.addEventListener('click', () => { document.querySelectorAll('.analytics-tabs button').forEach((tab) => tab.classList.toggle('active', tab === button)); if (dashboardStats) updateAnalytics(dashboardStats); })); document.querySelectorAll('.class-card').forEach((button) => button.addEventListener('click', () => window.Game?.setClass(button.dataset.class)));
-        $('#upgradeBtn')?.addEventListener('click', async () => { const response = await apiFetch('/api/subscription/upgrade', { method: 'POST' }); if (!response?.ok) return alert('❌ Upgrade mislukt. Probeer het opnieuw.'); const data = await response.json(); localStorage.setItem('token', data.token); window.location.reload(); });
-        function updateTodayLabel() { $('#todayLabel').textContent = new Intl.DateTimeFormat(window.LifeBuddyI18n?.getLanguage() === 'en' ? 'en-GB' : 'nl-NL', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date()).toUpperCase(); }
-        document.addEventListener('lifebuddy-languagechange', () => { updateTodayLabel(); renderTasks(); renderRecentTasks(); renderSubjects(); renderChatHistory(); if (dashboardStats) updateAnalytics(dashboardStats); if (currentUser) updateStreak(Number(currentUser.streak) || 0); renderFriends(); });
+        function showPage(page) { document.querySelectorAll('.sidebar-nav-item[data-page]').forEach((button) => button.classList.toggle('active', button.dataset.page === page)); document.querySelectorAll('.dashboard-page').forEach((section) => { const active = section.id === `page-${page}`; section.classList.toggle('active', active); section.hidden = !active; }); document.body.classList.remove('sidebar-open'); $('#sidebarToggle').setAttribute('aria-expanded', 'false'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        document.querySelectorAll('.sidebar-nav-item[data-page]').forEach((button) => button.addEventListener('click', () => showPage(button.dataset.page))); $('#openTasks').addEventListener('click', () => showPage('tasks')); document.addEventListener('click', (event) => { const goto = event.target.closest('[data-goto-page]'); if (goto) return showPage(goto.dataset.gotoPage); if (event.target.closest('[data-open-task-form]')) return $('#openTasks').click(); const prompt = event.target.closest('[data-buddy-prompt]'); if (prompt) document.dispatchEvent(new CustomEvent('buddy:open', { detail: { prompt: prompt.dataset.buddyPrompt } })); }); $('#viewAllTasks').addEventListener('click', () => showPage('tasks')); $('#sidebarToggle').addEventListener('click', () => { const open = document.body.classList.toggle('sidebar-open'); $('#sidebarToggle').setAttribute('aria-expanded', String(open)); }); $('#sidebarOverlay').addEventListener('click', () => { document.body.classList.remove('sidebar-open'); $('#sidebarToggle').setAttribute('aria-expanded', String(false)); }); $('#logoutBtn').addEventListener('click', () => { localStorage.removeItem('token'); window.location.replace('/'); });
+        document.querySelectorAll('.class-card').forEach((button) => button.addEventListener('click', () => window.Game?.setClass(button.dataset.class)));
+        function updateTodayLabel() { $('#todayLabel').textContent = new Intl.DateTimeFormat(window.LifeBuddyI18n?.getLanguage() === 'en' ? 'en-GB' : 'nl-NL', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date()).replace(/^./, (letter) => letter.toUpperCase()); }
+        document.addEventListener('lifebuddy-languagechange', () => { updateTodayLabel(); renderTasks(); renderRecentTasks(); renderSubjects(); if (dashboardStats) updateAnalytics(dashboardStats); if (currentUser) updateStreak(Number(currentUser.streak) || 0); renderFriends(); });
         updateTodayLabel();
-        async function init() { await Promise.all([loadUser(), loadTasks(), loadSubjects(), loadStats(), loadChatHistory(), loadFriends()]); window.Game?.updateUI(); }
+        document.addEventListener('buddy:reply-complete', () => { window.Game?.sendChat(); loadStats(); });
+        async function init() { await Promise.all([loadUser(), loadTasks(), loadSubjects(), loadTests(), loadPeriods(), loadStats(), loadFriends()]); window.Game?.updateUI(); }
         init();
     </script>
 </body>

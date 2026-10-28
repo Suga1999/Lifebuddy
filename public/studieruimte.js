@@ -100,7 +100,7 @@
     function renderDetail() {
         if (!currentList) return;
         $('#detailTitle').textContent = currentList.title;
-        $('#detailDescription').textContent = currentList.description || tr('Voeg termen toe of importeer ze om te beginnen.', 'Add terms or import them to get started.');
+        $('#detailDescription').textContent = currentList.description || (currentEntries.length ? '' : tr('Voeg termen toe of importeer ze om te beginnen.', 'Add terms or import them to get started.'));
         const languages = [currentList.term_language, currentList.definition_language].filter(Boolean).join(' → ');
         $('#detailLanguages').textContent = languages || tr('WOORDENLIJST', 'WORD LIST');
         $('#entryCount').textContent = numberText(currentEntries.length, 'woord', 'woorden', 'word', 'words');
@@ -128,7 +128,7 @@
             const correct = Number(entry.correct_count || 0), wrong = Number(entry.wrong_count || 0), attempts = correct + wrong;
             const rate = attempts ? Math.round((correct / attempts) * 100) : 0;
             const status = !attempts ? tr('Nieuw', 'New') : wrong > correct ? tr('Lastig', 'Difficult') : tr('Geoefend', 'Practiced');
-            return `<tr><td><strong>${escapeHtml(entry.term)}</strong></td><td>${escapeHtml(entry.definition)}</td><td><div class="entry-progress"><div><span class="entry-status ${!attempts ? 'new' : wrong > correct ? 'difficult' : 'practiced'}">${status}</span><small>${attempts ? `${correct}/${attempts} ${tr('goed', 'correct')}` : tr('Nog niet geoefend', 'Not practiced yet')}</small></div><span class="entry-mini-progress"><i style="width:${rate}%"></i></span></div></td><td><div class="entry-actions"><button type="button" data-edit-entry="${escapeHtml(entry.id)}" aria-label="${tr('Term bewerken', 'Edit term')}"><i class="fa-solid fa-pen"></i></button><button type="button" data-delete-entry="${escapeHtml(entry.id)}" aria-label="${tr('Term verwijderen', 'Delete term')}"><i class="fa-solid fa-trash-can"></i></button></div></td></tr>`;
+            return `<tr><td><strong>${escapeHtml(entry.term)}</strong><span class="entry-status entry-status-sm ${!attempts ? 'new' : wrong > correct ? 'difficult' : 'practiced'}">${status}</span></td><td>${escapeHtml(entry.definition)}</td><td><div class="entry-progress"><div><span class="entry-status ${!attempts ? 'new' : wrong > correct ? 'difficult' : 'practiced'}">${status}</span><small>${attempts ? `${correct}/${attempts} ${tr('goed', 'correct')}` : tr('Nog niet geoefend', 'Not practiced yet')}</small></div><span class="entry-mini-progress"><i style="width:${rate}%"></i></span></div></td><td><div class="entry-actions"><button type="button" data-edit-entry="${escapeHtml(entry.id)}" aria-label="${tr('Term bewerken', 'Edit term')}"><i class="fa-solid fa-pen"></i></button><button type="button" data-delete-entry="${escapeHtml(entry.id)}" aria-label="${tr('Term verwijderen', 'Delete term')}"><i class="fa-solid fa-trash-can"></i></button></div></td></tr>`;
         }).join('');
     }
 
@@ -262,6 +262,24 @@
         } catch (error) { showToast(error.message, 'error'); }
     }
 
+    // Same rule as the server: up to 20 words everything is asked, above that half of the words.
+    const autoPracticeCount = (wordCount) => (wordCount <= 20 ? wordCount : Math.ceil(wordCount / 2));
+    function practicePoolSize() {
+        const mode = $('#practiceSelection').value;
+        const wrong = (entry) => Number(entry.wrong_count || 0), correct = (entry) => Number(entry.correct_count || 0);
+        if (mode === 'difficult') return currentEntries.filter((entry) => wrong(entry) > correct(entry)).length;
+        if (mode === 'unpracticed') return currentEntries.filter((entry) => wrong(entry) + correct(entry) === 0).length;
+        if (mode === 'selected') return document.querySelectorAll('#specificWordPicker input:checked').length;
+        return currentEntries.length;
+    }
+    function updatePracticeCountHint() {
+        const pool = practicePoolSize(), choice = $('#practiceCount').value;
+        const questions = choice === 'auto' ? autoPracticeCount(pool) : choice === 'all' ? pool : Math.min(Number(choice), pool);
+        $('#practiceCountHint').textContent = pool
+            ? tr(`Je krijgt ${questions} van ${pool} ${pool === 1 ? 'woord' : 'woorden'}. Tot 20 woorden toets je alles, daarboven de helft.`, `You get ${questions} of ${pool} ${pool === 1 ? 'word' : 'words'}. Up to 20 words everything is asked, above that half.`)
+            : tr('Deze selectie bevat geen woorden.', 'This selection has no words.');
+    }
+
     function renderSpecificWordPicker() {
         const picker = $('#specificWordPicker');
         picker.innerHTML = currentEntries.map((entry) => `<label><input type="checkbox" value="${escapeHtml(entry.id)}"><span>${escapeHtml(entry.term)}<small>${escapeHtml(entry.definition)}</small></span></label>`).join('');
@@ -270,7 +288,7 @@
     function openPracticeSetup() {
         if (!currentEntries.length) return showToast(tr('Voeg eerst minstens één term toe.', 'Add at least one term first.'), 'error');
         $('#practiceSetupForm').reset();
-        $('#practiceCount').value = currentEntries.length >= 10 ? '10' : 'all';
+        $('#practiceCount').value = 'auto'; updatePracticeCountHint();
         $('#specificWordPicker').hidden = true;
         renderSpecificWordPicker();
         openModal('practiceSetupModal');
@@ -408,7 +426,9 @@
             $('#importTextArea').placeholder = importMode === 'equals' ? 'huis = house / home\nschool = school' : 'huis[TAB]house\nschool[TAB]school';
             renderImportPreview();
         }));
-        $('#practiceSelection').addEventListener('change', (event) => { $('#specificWordPicker').hidden = event.target.value !== 'selected'; });
+        $('#practiceSelection').addEventListener('change', (event) => { $('#specificWordPicker').hidden = event.target.value !== 'selected'; updatePracticeCountHint(); });
+        $('#practiceCount').addEventListener('change', updatePracticeCountHint);
+        $('#specificWordPicker').addEventListener('change', updatePracticeCountHint);
         $('#practiceSetupForm').addEventListener('submit', (event) => {
             event.preventDefault();
             const selectionMode = $('#practiceSelection').value;

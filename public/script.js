@@ -1,8 +1,10 @@
 // ============================================================
-// LIFE BUDDY - GAMIFICATION ENGINE
+// LIFE BUDDY - QUIET PROGRESS MILESTONES
 // ============================================================
 
 const Game = {
+    // Progress remains available in the Mijlpalen view, but does not interrupt study flows.
+    quietPresentation: true,
     // ===== USER STATE =====
     user: null,
     xp: 0,
@@ -48,17 +50,39 @@ const Game = {
             this.syncStreak(window.remoteStreak);
         }
         this.updateUI();
-        console.log('🎮 Game engine initialized!');
-        console.log(`📊 Level ${this.level} | ${this.xp}/${this.xpPerLevel} XP`);
     },
     
     // ===== STATE MANAGEMENT =====
+    storageKey() {
+        return `lifebuddy-game-${this.user?.id || 'guest'}`;
+    },
+
+    resetProgress() {
+        this.xp = 0;
+        this.level = 1;
+        this.class = 'wizard';
+        this.achievements = [];
+        this.lastDailyBonus = null;
+        this.stats = { tasks_completed: 0, subjects_added: 0, chat_messages: 0, study_streak: 0, total_xp: 0 };
+    },
+
+    setUserScope(userId) {
+        const id = String(userId || '').trim();
+        if (!id || this.user?.id === id) return;
+        this.user = { id };
+        this.resetProgress();
+        this.loadState();
+        this.updateUI();
+    },
+
     loadState() {
-        const saved = localStorage.getItem('gameState');
+        const saved = localStorage.getItem(this.storageKey());
         if (saved) {
             try {
+                const userScope = this.user;
                 const state = JSON.parse(saved);
                 Object.assign(this, state);
+                this.user = userScope;
                 this.stats = {
                     tasks_completed: 0,
                     subjects_added: 0,
@@ -68,9 +92,7 @@ const Game = {
                     ...(state.stats || {})
                 };
                 this.achievements = Array.isArray(state.achievements) ? state.achievements : [];
-            } catch (e) {
-                console.log('⚠️ Failed to load game state, using defaults');
-            }
+            } catch { this.resetProgress(); }
         }
     },
     
@@ -85,10 +107,8 @@ const Game = {
                 lastDailyBonus: this.lastDailyBonus,
                 stats: this.stats
             };
-            localStorage.setItem('gameState', JSON.stringify(state));
-        } catch (e) {
-            console.log('⚠️ Failed to save game state');
-        }
+            localStorage.setItem(this.storageKey(), JSON.stringify(state));
+        } catch { /* Local storage may be unavailable or full. */ }
     },
     
     // ===== XP & LEVEL =====
@@ -124,12 +144,9 @@ const Game = {
         // Show notification
         this.showNotification('🎉 Level Up!', `Je hebt level ${this.level} bereikt! 🎊`);
         
-        // Special rewards at certain levels
+        // Milestones communicate real, currently available functionality only.
         if (this.level === 5) {
-            this.showNotification('🌟 Nieuwe class beschikbaar!', 'Je kunt nu een nieuwe class kiezen!');
-        }
-        if (this.level === 10) {
-            this.showNotification('🌟 Premium thema\'s ontgrendeld!', 'Je kunt nu alle thema\'s gebruiken!');
+            this.showNotification('🌟 Mooie mijlpaal!', 'Je hebt level 5 bereikt. Blijf je eigen ritme volgen!');
         }
     },
     
@@ -325,6 +342,7 @@ const Game = {
     
     // ===== NOTIFICATIONS =====
     showNotification(title, message) {
+        if (this.quietPresentation) return;
         // Check of container bestaat
         let notifContainer = document.getElementById('notificationContainer');
         
@@ -365,6 +383,7 @@ const Game = {
     },
     
     showXPToast(amount, source) {
+        if (this.quietPresentation) return;
         // Floating XP text
         const xpToast = document.createElement('div');
         xpToast.style.cssText = `
@@ -419,7 +438,4 @@ window.Game = Game;
 // ===== INIT ON LOAD =====
 document.addEventListener('DOMContentLoaded', () => {
     Game.init();
-    console.log('🎮 LifeBuddy Gamification loaded!');
 });
-
-console.log('🎮 Game script loaded!');
